@@ -1,0 +1,8 @@
+{
+  "name": "@holospex/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./schemas/*": "./schemas/*" },
+  "dependencies": { "ajv": "^8.17.1" }
+}

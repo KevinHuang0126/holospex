@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.DS_Store
+.env
+.env.*
+!.env.example
+# Patient media, datasets, weights, and machine outputs stay local.
+data/
+models/
+runs/
+ml/artifacts/
+ml/weights/
+ml/outputs/
+apps/web/public/demo/
+*.tsbuildinfo

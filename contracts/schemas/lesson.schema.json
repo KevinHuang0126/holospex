@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "title": "Lesson",
+  "description": "Reviewed learning content is independent of model results. Synthetic content is not an anatomical answer key.",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "disclaimer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "image_sequence",
+            "video"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "src": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "width",
+        "height"
+      ]
+    },
+    "checkpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "frameNumber": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timestampMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "imagePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "frameResultPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "questions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "enum": [
+                    "anatomy_identification",
+                    "cvs_assessment"
+                  ]
+                },
+                "prompt": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "choices": {
+                  "type": "array",
+                  "minItems": 2,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "label": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "label"
+                    ]
+                  }
+                },
+                "reviewedAnswer": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "choiceId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "explanation": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "source": {
+                          "const": "synthetic_mock"
+                        },
+                        "reviewerId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "choiceId",
+                        "explanation",
+                        "source"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "choiceId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "explanation": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "source": {
+                          "const": "expert_reviewed"
+                        },
+                        "reviewerId": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "choiceId",
+                        "explanation",
+                        "source",
+                        "reviewerId"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "prompt",
+                "choices",
+                "reviewedAnswer"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "frameNumber",
+          "timestampMs",
+          "imagePath",
+          "frameResultPath",
+          "questions"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "description",
+    "disclaimer",
+    "media",
+    "checkpoints"
+  ]
+}

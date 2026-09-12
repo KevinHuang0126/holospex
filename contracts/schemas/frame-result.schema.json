@@ -1,0 +1,214 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "title": "FrameResult",
+  "description": "One source result for one original media frame. No result implies no overlay; no detection does not imply anatomical absence.",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "mediaId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frameNumber": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "timestampMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "coordinateSpace": {
+      "const": "original_pixels"
+    },
+    "source": {
+      "enum": [
+        "synthetic_mock",
+        "reviewed_annotation",
+        "ml_prediction",
+        "propagated_prediction"
+      ]
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "unsupported",
+        "missing",
+        "error"
+      ]
+    },
+    "statusReason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "propagatedFromTimestampMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "structures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "instanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "structureId": {
+            "enum": [
+              "gallbladder",
+              "cystic_duct",
+              "cystic_artery",
+              "cystic_plate",
+              "hepatocystic_triangle_dissection",
+              "tool"
+            ]
+          },
+          "polygon": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "number",
+                  "minimum": 0
+                }
+              ],
+              "additionalItems": false,
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "visibility": {
+            "enum": [
+              "visible",
+              "partial"
+            ]
+          }
+        },
+        "required": [
+          "instanceId",
+          "structureId",
+          "polygon",
+          "visibility"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "mediaId",
+    "frameNumber",
+    "timestampMs",
+    "width",
+    "height",
+    "coordinateSpace",
+    "source",
+    "status",
+    "structures"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "unsupported",
+              "missing",
+              "error"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "statusReason"
+        ],
+        "properties": {
+          "structures": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "enum": [
+              "ml_prediction",
+              "propagated_prediction"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "model"
+        ],
+        "properties": {
+          "structures": {
+            "items": {
+              "required": [
+                "confidence"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "const": "propagated_prediction"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "propagatedFromTimestampMs"
+        ]
+      }
+    }
+  ]
+}

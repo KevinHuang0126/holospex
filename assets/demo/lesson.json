@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "integration-lesson",
+  "title": "Holospex integration lab",
+  "description": "Test the handoff between lesson content, frame overlays, and saved answers using synthetic shapes.",
+  "disclaimer": "Synthetic integration fixture — not surgical footage, anatomical instruction, or a clinically reviewed lesson.",
+  "media": {
+    "id": "synthetic-demo",
+    "kind": "image_sequence",
+    "width": 800,
+    "height": 450
+  },
+  "checkpoints": [
+    {
+      "id": "identify",
+      "frameNumber": 0,
+      "timestampMs": 0,
+      "imagePath": "/demo/synthetic-frame.svg",
+      "frameResultPath": "/demo/frame-000.json",
+      "questions": [
+        {
+          "id": "class-mapping",
+          "kind": "anatomy_identification",
+          "prompt": "Integration check: which class is assigned to the mint polygon? You may inspect labels before answering.",
+          "choices": [
+            {
+              "id": "gallbladder",
+              "label": "Gallbladder"
+            },
+            {
+              "id": "tool",
+              "label": "Surgical tool"
+            }
+          ],
+          "reviewedAnswer": {
+            "choiceId": "gallbladder",
+            "explanation": "The mocked result assigns gallbladder to this arbitrary polygon. This tests class IDs and feedback plumbing; the shape is not an anatomical example.",
+            "source": "synthetic_mock"
+          }
+        }
+      ]
+    },
+    {
+      "id": "uncertainty",
+      "frameNumber": 1,
+      "timestampMs": 1000,
+      "imagePath": "/demo/synthetic-frame.svg",
+      "frameResultPath": "/demo/frame-001.json",
+      "questions": [
+        {
+          "id": "synthetic-cvs",
+          "kind": "cvs_assessment",
+          "prompt": "Can this synthetic illustration establish that the Critical View of Safety is achieved in a surgical case?",
+          "choices": [
+            {
+              "id": "achieved",
+              "label": "Achieved"
+            },
+            {
+              "id": "not_achieved",
+              "label": "Not achieved"
+            },
+            {
+              "id": "cannot_determine",
+              "label": "Cannot determine"
+            }
+          ],
+          "reviewedAnswer": {
+            "choiceId": "cannot_determine",
+            "explanation": "This is an arbitrary illustration, so no surgical judgment can be made. In a real lesson, a clinical reviewer must establish the answer from the supplied case evidence; model availability cannot decide it.",
+            "source": "synthetic_mock"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "mediaId": "synthetic-demo",
+  "frameNumber": 1,
+  "timestampMs": 1000,
+  "width": 800,
+  "height": 450,
+  "coordinateSpace": "original_pixels",
+  "source": "synthetic_mock",
+  "status": "unsupported",
+  "structures": [],
+  "statusReason": "This checkpoint demonstrates unavailable overlays. No anatomical assessment has been performed."
+}

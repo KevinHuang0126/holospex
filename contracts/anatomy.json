@@ -1,0 +1,26 @@
+{
+  "gallbladder": {
+    "label": "Gallbladder",
+    "color": "#45d6aa"
+  },
+  "cystic_duct": {
+    "label": "Cystic duct",
+    "color": "#f2c94c"
+  },
+  "cystic_artery": {
+    "label": "Cystic artery",
+    "color": "#f08080"
+  },
+  "cystic_plate": {
+    "label": "Cystic plate",
+    "color": "#ac9cff"
+  },
+  "hepatocystic_triangle_dissection": {
+    "label": "Hepatocystic triangle dissection",
+    "color": "#6cc9ee"
+  },
+  "tool": {
+    "label": "Surgical tool",
+    "color": "#cbd5e1"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "mediaId": "synthetic-demo",
+  "frameNumber": 0,
+  "timestampMs": 0,
+  "width": 800,
+  "height": 450,
+  "coordinateSpace": "original_pixels",
+  "source": "synthetic_mock",
+  "status": "ok",
+  "structures": [
+    {
+      "instanceId": "mock-1",
+      "structureId": "gallbladder",
+      "polygon": [
+        [
+          270,
+          100
+        ],
+        [
+          470,
+          95
+        ],
+        [
+          545,
+          205
+        ],
+        [
+          450,
+          345
+        ],
+        [
+          255,
+          295
+        ],
+        [
+          215,
+          195
+        ]
+      ],
+      "visibility": "visible"
+    }
+  ]
+}
