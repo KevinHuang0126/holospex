@@ -12,8 +12,12 @@ export interface DisplayedFrame {
  * change, unavailable output, or coordinate mismatch, remove the old overlay.
  */
 export function matchesDisplayedFrame(result: FrameResult | null, displayed: DisplayedFrame): boolean {
+  return result?.status === "ok" && matchesFrameIdentity(result, displayed);
+}
+
+/** Availability does not change which original frame a record belongs to. */
+export function matchesFrameIdentity(result: FrameResult | null, displayed: DisplayedFrame): boolean {
   return result !== null
-    && result.status === "ok"
     && result.coordinateSpace === "original_pixels"
     && result.mediaId === displayed.mediaId
     && result.frameNumber === displayed.frameNumber

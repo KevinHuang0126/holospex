@@ -1,6 +1,6 @@
 # Web integration guide
 
-This is a runnable architecture scaffold. Its lesson uses a **synthetic illustration**, not surgical footage. The camera mode is a preview, not marker tracking or anatomy detection.
+This is a runnable architecture scaffold. Its lesson uses a **synthetic illustration**, not surgical footage. The Camera prototype tab now opens the local HUD integration harness. Reusable video and marker-registration modules are described in the [AR/HUD infrastructure handoff](../../docs/ar-hud-infrastructure.md). Real assets, measured model configuration, and device testing remain for the integration pass.
 
 Run from the repository root using the root README commands. Demo source JSON and SVG files live in `assets/demo/` at the repository root; `npm run prepare:demo` validates and copies them into `public/demo/` for the browser. Edit source assets, not the generated public copy. The ML/export owner provides new content through the shared contracts.
 

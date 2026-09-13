@@ -2,6 +2,10 @@
 
 Build one complete educational lesson and one small camera demonstration that explains the future glasses experience. The current scaffold is an integration starting point; real surgical assets, content review, a trained model, and working marker registration must be verified separately.
 
+Schedule update: build and integrate both paths today; test and revise tomorrow.
+React + TypeScript is confirmed. See [Person 2's steps 1–3 handoff](ar-hud-steps-1-3.md)
+for the device check screen, current contract, frontend controls, and pending confirmations.
+
 ## Owners and handoffs
 
 | Owner | Deliverable | Handoff to the others |
@@ -32,14 +36,16 @@ These are acceptance gates, not a report of features already implemented.
 - Use an independently reviewed difficult example with a supported answer rubric. A low model score alone is insufficient to author `cannot_determine` feedback.
 - Prepare a different case for the final hidden-label transfer question. If review or real assets are unavailable, keep the demo visibly synthetic and report that limitation.
 
-### Gate 3 — ML and camera branches · Day 1 afternoon into Day 2 morning
+### Gate 3 — ML and camera branches · Day 1 afternoon
 
 - ML: export predictions for the selected checkpoints. Switch sources without changing lesson answers or renderer internals. Identify unsupported anatomy and retain a successful-empty result separately from inference failure.
 - ML: inspect predictions in original-frame coordinates. If training or reporting accuracy, separate train/validation/test at the surgical-video level; choose thresholds using validation data.
 - Camera: register one marker/model on the selected phone or desktop camera, display predefined labels through small motions, hide labels for identification, and clear them on tracking loss.
 - The presentation visibly distinguishes a synthetic fixture, reviewed geometry, ML predictions, and marker-positioned model labels. Physical labels must not be described as surgical-image ML detections.
 
-### Gate 4 — Device rehearsal and freeze · Day 2
+### Gate 4 — Preserve the demo today; test and revise on Day 2
+
+- By the end of Day 1, preserve the integrated working build, record backups of both modes, and assign demo/recovery operators.
 
 - From a clean start, run the lesson, export an attempt, switch into camera mode, and recover from denied camera access or tracking loss.
 - Check pause, seek, replay, source switching, resize/phone rotation, missing assets, malformed results, and late results. There must be no stale geometry on a different frame.

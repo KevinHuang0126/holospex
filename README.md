@@ -1,12 +1,17 @@
 # Holospex
 
+AR/HUD infrastructure is now available for teammate integration. See the
+[renderer and camera handoff](docs/ar-hud-infrastructure.md) for public components,
+result inputs, model configuration, controls, tests, and remaining device checks.
+
 A shared starting point for a two-day surgical education hackathon: a browser
 lesson and a phone/desktop camera path, designed with future AR glasses in mind.
 
-**Current scaffold:** a synthetic image-checkpoint lesson, typed and validated
-data handoffs, overlay controls, answer recording/export, an explicit camera
-preview, and a Python inference adapter boundary. There is no trained surgical
-model, real surgical lesson, marker registration, or glasses integration yet.
+**Current scaffold:** a synthetic image-checkpoint lesson, validated data handoffs,
+canvas video HUD, frontend controls, calibrated marker-registration modules,
+camera input, recording support, answer export, and a Python inference boundary.
+Real surgical assets, model calibration and device validation are still needed.
+There is no trained surgical model, real reviewed lesson, or glasses integration.
 
 ## Start the browser app
 
