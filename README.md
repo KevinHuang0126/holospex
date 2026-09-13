@@ -3,10 +3,14 @@
 A shared starting point for a two-day surgical education hackathon: a browser
 lesson and a phone/desktop camera path, designed with future AR glasses in mind.
 
-**Current scaffold:** a synthetic image-checkpoint lesson, typed and validated
+**Web scaffold:** a synthetic image-checkpoint lesson, typed and validated
 data handoffs, overlay controls, answer recording/export, an explicit camera
-preview, and a Python inference adapter boundary. There is no trained surgical
-model, real surgical lesson, marker registration, or glasses integration yet.
+preview. The **ML package** now provides real Endoscapes data acquisition,
+preparation, model training, evaluation, and inference exports. See the
+[ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
+Trained weights and surgical data remain local;
+the web lesson still uses synthetic fixtures. Marker registration and glasses
+integration are future work.
 
 ## Start the browser app
 
@@ -46,9 +50,9 @@ python -m holospex_ml validate assets/demo/frame-000.json
 PYTHONPATH=ml/src python -m unittest discover -s ml/tests -v
 ```
 
-See [`ml/README.md`](ml/README.md) for the unconfigured-adapter export command,
-geometry mapping, and where to add the real model. The unconfigured adapter
-returns an explicit unsupported result; it does not invent detections.
+For the actual dataset and training workflow, install `./ml[train]` instead and
+follow [`ml/TRAINING.md`](ml/TRAINING.md). The lightweight unconfigured adapter
+is retained to test explicit unavailable-result handling.
 
 ## Where to work
 

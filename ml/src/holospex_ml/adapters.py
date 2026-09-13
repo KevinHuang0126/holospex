@@ -19,7 +19,8 @@ class FrameInput:
 
     A real decoder must verify width/height against its image and preserve the
     media timestamp (not wall-clock inference time). ``image_path=None`` is
-    useful only for the unconfigured adapter, which never reads image content.
+    valid when decoded RGB is supplied separately to ``predict_rgb_details``
+    or when the unconfigured adapter does not read image content.
     """
 
     media_id: str

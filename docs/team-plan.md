@@ -57,7 +57,9 @@ No inference API, account system, cloud database, glasses SDK, or live-patient w
 
 ## Decisions the lead still needs
 
-- **ML:** available GPU/cloud budget, existing model weights, and the dataset/media access already obtained.
+- **ML progress:** the local M4 GPU runs the Endoscapes baseline. Data acquisition,
+  model training and offline exports are documented in [the ML runbook](../ml/TRAINING.md).
+  Cloud compute is optional; retain per-class evidence before choosing a larger run.
 - **Camera:** the actual device/browser, physical model, and marker/registration library; define model coordinates with Person 2.
 - **Content:** reviewer availability, selected cases, asset license/permission record, and review criteria for uncertain views.
 - **Product:** whether future “live practice” means simulation or actual patient operations. Current implementation assumes simulation/education until clarified.

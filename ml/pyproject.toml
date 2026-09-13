@@ -9,6 +9,10 @@ description = "Offline perception adapters and contract validation for the Holos
 requires-python = ">=3.11"
 dependencies = ["jsonschema>=4.23,<5"]
 
+[project.optional-dependencies]
+data = ["numpy>=2.0,<3", "Pillow>=11,<13"]
+train = ["numpy>=2.0,<3", "Pillow>=11,<13", "torch>=2.8,<3", "torchvision>=0.23,<1", "opencv-python-headless>=4.10,<5", "av>=16,<20"]
+
 [project.scripts]
 holospex-ml = "holospex_ml.cli:main"
 
