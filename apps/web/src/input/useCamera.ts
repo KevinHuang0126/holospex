@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Input adapter only: obtaining camera pixels does not locate anatomy.
- * The future marker tracker consumes this stream and produces its own poses;
+ * The marker tracker consumes this stream and produces its own poses;
  * surgical-video segmentation must not be applied to this stream by default.
  */
 export function useCamera() {

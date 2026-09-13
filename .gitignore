@@ -18,4 +18,5 @@ ml/artifacts/
 ml/weights/
 ml/outputs/
 apps/web/public/demo/
+apps/web/tests/samples_tst/
 *.tsbuildinfo

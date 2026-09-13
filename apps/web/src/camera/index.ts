@@ -1,4 +1,10 @@
 export { ModelHud } from "./ModelHud";
+export { MannequinDemo } from "./MannequinDemo";
+export { createMarkerTestRegistration, printableMarkerSvg } from "./markerSetup";
+export { createSurgicalRegistration } from "./surgicalScene";
+export { loadImageOverlayAsset } from "./imageOverlayAsset";
+export type { ImageOverlayAsset, ImageOverlayView } from "./imageOverlayAsset";
+export type { CameraImageOverlay } from "./ModelHud";
 export { HudRecorder } from "./HudRecorder";
 export { DeviceSetup } from "./DeviceSetup";
 export { parseModelRegistration } from "./modelRegistration";

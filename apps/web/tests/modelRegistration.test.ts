@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import aruco from "js-aruco2";
 import { parseModelRegistration, projectPoint, registerModel } from "../src/camera/modelRegistration";
+import { createMarkerTestRegistration, printableMarkerSvg } from "../src/camera/markerSetup";
 const { AR } = aruco;
 
 const config = parseModelRegistration({ modelId: "synthetic-test-only", provenance: "synthetic_mock", dictionary: "ARUCO_MIP_36h12", markerId: 7, markerSizeMm: 80,
@@ -41,4 +42,66 @@ test("the actual marker detector recognizes the configured dictionary and reject
   assert.equal(detected.length, 1);
   assert.equal(detected[0].id, config.markerId);
   assert.deepEqual(detector.detect({ width, height, data: new Uint8ClampedArray(data.length).fill(255) } as ImageData), []);
+});
+
+test("printable marker preserves its physical black-square size and decodes through the real detector", () => {
+  // Rasterize the actual exported SVG's rectangles, including its white border.
+  for (const markerId of [7, 249]) {
+    const fixture = { ...createMarkerTestRegistration(400, 400), markerId };
+    const svg = printableMarkerSvg(fixture);
+    assert.match(svg, /width="100mm" height="100mm"/);
+    assert.match(svg, /viewBox="0 0 10 10"/);
+    const width = 400, height = 400, cell = 40;
+    const data = new Uint8ClampedArray(width * height * 4).fill(255);
+    for (const match of svg.matchAll(/<rect x="(\d+)" y="(\d+)" width="(\d+)" height="(\d+)" fill="(white|black)"\/>/g)) {
+      const [, sx, sy, sw, sh, fill] = match;
+      for (let y = Number(sy) * cell; y < (Number(sy) + Number(sh)) * cell; y++) {
+        for (let x = Number(sx) * cell; x < (Number(sx) + Number(sw)) * cell; x++) {
+          const offset = (y * width + x) * 4;
+          data[offset] = data[offset + 1] = data[offset + 2] = fill === "white" ? 255 : 0;
+        }
+      }
+    }
+    const detector = new AR.Detector({ dictionaryName: fixture.dictionary, maxHammingDistance: 0 });
+    const markers = detector.detect({ width, height, data } as ImageData);
+    assert.equal(markers.length, 1); assert.equal(markers[0].id, markerId);
+    const points = registerModel(fixture, markers[0].corners, width, height);
+    assert.ok(points && points.length >= 1);
+    assert.ok(Math.hypot(points[0].x - 200, points[0].y - 200) < 1);
+  }
+  assert.match(printableMarkerSvg(createMarkerTestRegistration(1280, 720, 64)), /width="80mm" height="80mm"/);
+});
+
+test("off-center 3D mannequin locations follow small viewpoint changes and detector resizing", () => {
+  const fixture = parseModelRegistration({ ...config,
+    calibration: { width: 1280, height: 720, fx: 1150, fy: 1100, cx: 630, cy: 350 },
+    anchors: [
+      { id: "left", structureId: "gallbladder", positionMm: [-55, 20, -10] },
+      { id: "right", structureId: "cystic_duct", positionMm: [50, 35, 20] },
+    ],
+  });
+  const half = fixture.markerSizeMm / 2;
+  const square = [[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]];
+  for (const angle of [-0.18, 0.12, 0.2]) {
+    const rotation = [[Math.cos(angle), 0, Math.sin(angle)], [0, 1, 0], [-Math.sin(angle), 0, Math.cos(angle)]];
+    const translation = [15, -20, 550];
+    const corners = square.map(point => { const [x, y] = projectPoint(point, rotation, translation, fixture.calibration)!; return { x, y }; });
+    for (const scale of [1, 0.5]) {
+      const points = registerModel(fixture, corners.map(p => ({ x: p.x * scale, y: p.y * scale })), 1280 * scale, 720 * scale);
+      assert.equal(points?.length, 2);
+      fixture.anchors.forEach((anchor, index) => {
+        const expected = projectPoint(anchor.positionMm, rotation, translation, fixture.calibration)!;
+        const point = points![index];
+        assert.ok(Math.hypot(point.x / scale - expected[0], point.y / scale - expected[1]) < 2, `Viewpoint ${angle}, scale ${scale}: anchor drift`);
+      });
+    }
+  }
+});
+
+test("marker test uses the actual frame dimensions but never declares its locations measured", () => {
+  const fixture = createMarkerTestRegistration(1920, 1080);
+  assert.equal(fixture.provenance, "synthetic_mock");
+  assert.equal(fixture.calibration.width / fixture.calibration.height, 16 / 9);
+  assert.throws(() => createMarkerTestRegistration(1920, 0));
+  assert.throws(() => createMarkerTestRegistration(640, 480, NaN));
 });

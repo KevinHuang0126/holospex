@@ -14,11 +14,59 @@ real Endoscapes data acquisition,
 preparation, model training, evaluation, and inference exports. See the
 [ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
 Trained weights and surgical data remain local; the web lesson still uses
-synthetic fixtures. Real-asset integration, model calibration, and device
-validation are still needed. Reviewed lesson content and glasses integration
-remain future work.
+synthetic fixtures. The **Dataset samples** view imports Person 1's local
+Endoscapes stills and exact masks with explicit dataset provenance. See the
+[sample connection handoff](docs/dataset-sample-connection.md) for loading
+`samples_tst` and connecting frontend callbacks. Video prediction integration,
+model calibration, and device validation still need their actual inputs.
+Reviewed lesson content and glasses integration remain future work.
 
 ## Start the browser app
+
+For phone camera testing, open the [deployed mannequin demo](https://holospex-mannequin-phone.vercel.app/mannequin)
+in your phone browser and allow camera access. The laptop can be turned off.
+See the [phone setup and redeployment instructions](docs/mannequin-overlay.md#open-it-on-a-phone).
+
+The live camera/mannequin overlay is at **http://127.0.0.1:5174/mannequin**
+when running `npm run dev:samples` (or `/mannequin` on the URL from `npm run dev`).
+The default **Labeled image** overlays the original surgical JPEG and its exact
+anatomy mask on the camera. **Camera screen** keeps the image fixed on screen;
+**Table marker** places it as a flat image beyond a printed marker. Choose
+**Full surgical image** or **Anatomy cutout**, then adjust size and opacity.
+**Scene → Mannequin + sample** places that image on the supplied mannequin
+photo. **Fit anatomy with AI** requests a position and scale from the
+[placement API](docs/anatomy-placement-api.md); sliders allow fine adjustment.
+Use **Table marker** to anchor the mannequin, image and labels together.
+The composite stays flat, and its illustrative placement needs visual checking.
+This preserves supplied dataset annotation provenance; it does not reconstruct
+3D anatomy or run live inference. Learn reveals the image and labels;
+Identify and Assess hide them. Feedback is withheld because reviewed answers
+have not been supplied.
+Local sample mode loads the usable `samples_tst` cases automatically. To use a
+sample on your phone, run `npm run prepare:camera-samples`, transfer one generated
+`.holospex.json` file from `runs/camera-samples/` to the phone's Files app, and
+select it under **Open camera sample or sample files**. Dataset files are excluded
+from the public deployment. **Marker test** and **Mannequin configuration** remain
+available for tracking checks and measured model locations. See the
+[image overlay guide](docs/camera-image-overlay.md) and
+[camera setup guide](docs/mannequin-overlay.md).
+
+To test the current samples independently of the learning frontend:
+
+```sh
+npm run dev:samples
+```
+
+Open **http://127.0.0.1:5174/samples**. The standalone React page automatically
+loads the usable cases from `apps/web/tests/samples_tst`, with case navigation,
+overlay controls, learning modes and a click-selection readout. **Reload local
+samples** re-reads that folder. Its sample endpoint is local to this opt-in
+development command; production builds retain the manual folder picker.
+
+The tester now focuses on the supplied image overlays. Adjust fill opacity,
+switch boundaries and labels independently, or use **Boundaries only** to
+inspect alignment. **Show overlays** instantly returns to the original image.
+Identify and Assess override all layer controls and keep anatomical answers hidden.
 
 Use Node 22.12+ (Node 24 LTS is a suitable team baseline) and npm.
 
@@ -40,7 +88,8 @@ npm run build
 
 The build is emitted to `apps/web/dist/`. No inference server, account, or API
 key is needed. `npm run prepare:demo` validates and copies a fixed allowlist of
-synthetic source assets from `assets/demo/` into `apps/web/public/demo/`.
+synthetic source assets and the selected mannequin reference from
+`assets/demo/` into `apps/web/public/demo/`.
 The copy is generated: edit `assets/demo/`, not `public/demo/`.
 
 ## Start the Python pipeline

@@ -1,9 +1,11 @@
 # AR/HUD infrastructure handoff
 
-Current scope: reusable infrastructure. Real surgical assets, Person 3's learning
-app wiring, hardware calibration, device acceptance, and actual backup recordings
-are deferred to the integration pass at the project owner's request. This is not
-a claim that the complete P0 demo has been verified.
+Current scope: reusable infrastructure plus the local Person 1 dataset-sample
+connection. See [the sample importer handoff](dataset-sample-connection.md) for
+the two usable stills, exact raster rendering, frontend callbacks and missing
+third label record. Video assets/predictions, Person 3's lesson wiring, hardware
+calibration, device acceptance and actual backup recordings remain pending.
+The complete P0 demo has not been verified.
 
 ## Entry points
 
@@ -13,8 +15,19 @@ a claim that the complete P0 demo has been verified.
 | `apps/web/src/overlays/VideoHud.tsx` | Video-frame capture, exact result selection, composed canvas, source/warning display, immediate visibility changes |
 | `apps/web/src/overlays/useHudControls.ts` | Playback, seek, modes, source/input switching, frame invalidation and selection callback boundary |
 | `apps/web/src/camera/index.ts` | Public model HUD, registration parser, readiness panel and recording component |
+| `apps/web/src/camera/MannequinDemo.tsx` | Labeled image on live camera, screen/table placement, printable marker test, configuration import and recording; hosted at `/mannequin` |
+| `apps/web/src/camera/imageOverlayAsset.ts` | Validated original image plus exact mask becomes a full-image texture or anatomy cutout with source-pixel anchors |
+| `apps/web/src/camera/ImagePlaneRenderer.ts` | Flat image and labels share the calibrated table-marker projection; screen-placement helpers preserve image aspect |
+| `apps/web/src/overlays/portableSample.ts` | One local image/labels/mask file for phone transfer, with the original hashes and provenance checked on import |
+| `apps/web/src/camera/surgicalScene.ts` | Synthetic open-abdomen 3D geometry and matching anatomical landmarks; see [scene handoff](surgical-scene.md) |
+| `apps/web/src/camera/SurgicalRenderer.ts` | Calibrated Three.js rendering for the tabletop scene and a separate camera-off preview |
 | `apps/web/src/camera/modelRegistration.ts` | Marker-relative model configuration validation and calibrated 3D projection |
-| `apps/web/src/camera/HudDemo.tsx` | Local file integration harness, accessible through the existing Camera prototype tab |
+| `apps/web/src/camera/HudDemo.tsx` | Local file integration harness, accessible through the AR / HUD demo tab |
+| `apps/web/src/overlays/DatasetSampleHud.tsx` | Original still plus exact raster mask, dataset provenance, shared modes and selection callbacks |
+
+The default camera experience uses the [labeled-image overlay](camera-image-overlay.md).
+The procedural 3D scene remains a separate adapter; it is not derived from the
+sample images and is no longer the default camera setup.
 
 Start from the repository root with `npm run dev`. The integration harness accepts
 local video, result JSON, and model registration JSON. It does not upload them.
@@ -104,10 +117,14 @@ separate registration/anchor identity type rather than video pixel coordinates.
 
 ## Physical-model configuration
 
+Use the [live mannequin setup guide](mannequin-overlay.md) to start the camera
+and test with the downloadable marker before supplying a measured model file.
+
 The implementation uses `js-aruco2` with the ARUCO_MIP_36h12 dictionary, exact-code
 matching, and POSIT pose estimation. Supply a configuration to
 `parseModelRegistration`, then pass the result to `ModelHud` with the selected
-camera stream, learning mode, and visibility. It rejects wrong camera aspect,
+camera stream, learning mode, and visibility. Optional `onCameraSize` reports
+native frame dimensions to the host. It rejects wrong camera aspect,
 invalid pose/depth, duplicate IDs, and invalid anchors. Marker loss removes
 anchors immediately; missing camera frames trigger a 250 ms watchdog. It does not
 fade or retain a lost pose. The parent must stop camera tracks on exit.
@@ -139,10 +156,13 @@ canonical upright view. The square's corners are (-s/2,+s/2,0), (+s/2,+s/2,0),
 the viewer for a front-facing identity pose); verify depth direction during the
 calibration pass. Anchor positions include the measured marker-to-model offset.
 Use a rigid mount. `markerSizeMm` measures the black square, excluding its white
-margin. The harness can save the configured marker as SVG for printing.
+margin. The harness saves the configured marker as SVG with millimeter dimensions
+and a white margin. Print at 100% scale and check the black square with a ruler.
 
-Camera calibration is fx/fy/cx/cy at the stated image size. The detector downsamples
-to at most 640 pixels wide and scales intrinsics accordingly. Lens distortion is
+Camera calibration is fx/fy/cx/cy at the stated image size. The preview is capped
+at 1280 pixels wide; detection uses at most 640 pixels and scales intrinsics
+accordingly. POSIT solves normalized rays on a fixed focal plane so detector
+downsampling does not change its rounded-pixel stopping precision. Lens distortion is
 not modeled; use a rectified input or validate a central, narrow working region.
 Small viewpoint changes still require actual-model testing. No device, model,
 intrinsics, or anatomical anchor measurements have been assumed to be verified.

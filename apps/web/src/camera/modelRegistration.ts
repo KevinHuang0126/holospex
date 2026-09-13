@@ -35,14 +35,25 @@ export function projectPoint(position: number[], rotation: number[][], translati
   return [c.cx + c.fx * point[0] / point[2], c.cy - c.fy * point[1] / point[2]];
 }
 
+export interface ModelPose {
+  rotation: number[][];
+  translation: number[];
+  calibration: ModelRegistration["calibration"];
+  reprojectionError: number;
+}
+
 /** Marker/model positions never enter FrameResult. Camera lens distortion is not modeled. */
-export function registerModel(config: ModelRegistration, corners: { x: number; y: number }[], width: number, height: number): HudAnchor[] | null {
+export function estimateModelPose(config: ModelRegistration, corners: { x: number; y: number }[], width: number, height: number): ModelPose | null {
   if (![width, height].every(v => Number.isFinite(v) && v > 0) || corners.length !== 4 || corners.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))
     || Math.abs(width / height - config.calibration.width / config.calibration.height) > 0.01) return null;
   const scale = width / config.calibration.width;
   const c = { ...config.calibration, width, height, fx: config.calibration.fx * scale, fy: config.calibration.fy * scale, cx: config.calibration.cx * scale, cy: config.calibration.cy * scale };
-  const centered = corners.map(p => ({ x: p.x - c.cx, y: (c.cy - p.y) * c.fx / c.fy }));
-  const pose = new POS.Posit(config.markerSizeMm, c.fx).pose(centered);
+  // POSIT stops when its rounded pixel error reaches zero. Solve the same
+  // camera rays on a fixed, larger focal plane so downsampling cannot change
+  // its stopping precision (or flip which planar pose wins).
+  const solverFocal = 10000;
+  const centered = corners.map(p => ({ x: (p.x - c.cx) / c.fx * solverFocal, y: (c.cy - p.y) / c.fy * solverFocal }));
+  const pose = new POS.Posit(config.markerSizeMm, solverFocal).pose(centered);
   const half = config.markerSizeMm / 2;
   const square = [[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]];
   const candidates = [
@@ -55,11 +66,21 @@ export function registerModel(config: ModelRegistration, corners: { x: number; y
     }, 0) })).sort((a, b) => a.reprojection - b.reprojection);
   const best = candidates[0];
   if (!best || best.reprojection > 4) return null;
+  return { rotation: best.r, translation: best.t, calibration: c, reprojectionError: best.reprojection };
+}
+
+export function projectModelAnchors(config: ModelRegistration, pose: ModelPose): HudAnchor[] {
+  const { calibration: c, rotation, translation } = pose;
   const anchors: HudAnchor[] = [];
   for (const anchor of config.anchors) {
-    const point = projectPoint(anchor.positionMm, best.r, best.t, c);
-    if (!point || point[0] < 0 || point[1] < 0 || point[0] > width || point[1] > height) continue;
+    const point = projectPoint(anchor.positionMm, rotation, translation, c);
+    if (!point || point[0] < 0 || point[1] < 0 || point[0] > c.width || point[1] > c.height) continue;
     anchors.push({ id: anchor.id, structureId: anchor.structureId, x: point[0], y: point[1] });
   }
   return anchors;
+}
+
+export function registerModel(config: ModelRegistration, corners: { x: number; y: number }[], width: number, height: number): HudAnchor[] | null {
+  const pose = estimateModelPose(config, corners, width, height);
+  return pose ? projectModelAnchors(config, pose) : null;
 }

@@ -10,5 +10,5 @@
     "esModuleInterop": true,
     "types": ["node"]
   },
-  "include": ["contracts/src", "contracts/tests", "scripts/*.ts"]
+  "include": ["contracts/src", "contracts/tests", "scripts/*.ts", "api", "server", "shared"]
 }

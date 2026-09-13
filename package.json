@@ -7,6 +7,10 @@
   "engines": { "node": ">=22.12.0" },
   "scripts": {
     "dev": "npm run prepare:demo && npm run dev --workspace=@holospex/web",
+    "dev:samples": "npm run prepare:demo && npm run dev:samples --workspace=@holospex/web",
+    "preview:phone": "npm run preview:phone --workspace=@holospex/web",
+    "prepare:phone": "node scripts/prepare-phone.mjs",
+    "prepare:camera-samples": "node --import tsx scripts/prepare-camera-sample.ts",
     "build": "npm run contracts:generate && npm run prepare:demo && npm run build --workspace=@holospex/web",
     "check": "npm run contracts:check && npm run test:contracts && npm run test:web && tsc --noEmit && npm run typecheck --workspace=@holospex/web",
     "contracts:generate": "node scripts/generate-contracts.mjs",
@@ -17,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
     "json-schema-to-typescript": "^15.0.0",
     "tsx": "^4.20.0",
     "typescript": "~5.9.3"
