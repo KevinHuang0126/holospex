@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@holospex/contracts": "*",
+    "js-aruco2": "^2.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

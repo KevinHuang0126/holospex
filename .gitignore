@@ -11,6 +11,7 @@ __pycache__/
 !.env.example
 # Patient media, datasets, weights, and machine outputs stay local.
 data/
+!apps/web/src/data/
 models/
 runs/
 ml/artifacts/

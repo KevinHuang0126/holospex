@@ -1,16 +1,22 @@
 # Holospex
 
+AR/HUD infrastructure is now available for teammate integration. See the
+[renderer and camera handoff](docs/ar-hud-infrastructure.md) for public components,
+result inputs, model configuration, controls, tests, and remaining device checks.
+
 A shared starting point for a two-day surgical education hackathon: a browser
 lesson and a phone/desktop camera path, designed with future AR glasses in mind.
 
-**Web scaffold:** a synthetic image-checkpoint lesson, typed and validated
-data handoffs, overlay controls, answer recording/export, an explicit camera
-preview. The **ML package** now provides real Endoscapes data acquisition,
+**Web scaffold:** a synthetic image-checkpoint lesson, validated data handoffs,
+canvas video HUD, frontend controls, calibrated marker-registration modules,
+camera input, recording support, and answer export. The **ML package** provides
+real Endoscapes data acquisition,
 preparation, model training, evaluation, and inference exports. See the
 [ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
-Trained weights and surgical data remain local;
-the web lesson still uses synthetic fixtures. Marker registration and glasses
-integration are future work.
+Trained weights and surgical data remain local; the web lesson still uses
+synthetic fixtures. Real-asset integration, model calibration, and device
+validation are still needed. Reviewed lesson content and glasses integration
+remain future work.
 
 ## Start the browser app
 

@@ -15,7 +15,10 @@ for (const name of ['lesson', 'frame-result', 'learner-attempt']) {
   const destination = new URL(`contracts/src/generated/${name}.ts`, root);
   if (check) {
     const current = await readFile(destination, 'utf8').catch(() => '');
-    if (current !== output) throw new Error(`Stale ${name} types. Run npm run contracts:generate.`);
+    // Windows checkouts may use CRLF without changing the generated contract.
+    if (current.replaceAll('\r\n', '\n') !== output.replaceAll('\r\n', '\n')) {
+      throw new Error(`Stale ${name} types. Run npm run contracts:generate.`);
+    }
   } else await writeFile(destination, output);
 }
 console.log(check ? 'Contract types match schemas.' : 'Contract types generated.');
