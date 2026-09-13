@@ -2,8 +2,10 @@
 
 Read `README.md` and `docs/architecture.md` before changing module boundaries.
 This is a two-day educational hackathon prototype with a future AR-glasses
-direction. The scaffold uses synthetic geometry; it is not a trained model or a
-reviewed surgical lesson. The user leads ML and general architecture.
+direction. The web scaffold uses synthetic geometry. The ML package now has a
+real Endoscapes training and export path; read `ml/TRAINING.md` and `ml/STATUS.md`
+before describing its capabilities. The user leads ML and general
+architecture. Dataset labels and predictions are not reviewed lesson answers.
 
 ## Ownership and parallel work
 
@@ -42,7 +44,8 @@ reviewed surgical lesson. The user leads ML and general architecture.
   producer/consumer and fixtures, then run `npm run check` and Python tests.
 - Web change: `npm run check` and `npm run build`. Exercise the affected flow
   in a browser when interaction or rendering changes.
-- ML change: `PYTHONPATH=ml/src python3 -m unittest discover -s ml/tests -v`.
+- ML change: `.venv/bin/python -m unittest discover -s ml/tests -v` after
+  installing the optional dependencies needed for the changed modules.
 - Run only checks relevant to the change; avoid tests that merely restate code.
 - Report what works, what was tested, and which adapters remain placeholders.
   Do not describe a directory, interface, or mock as a completed capability.
