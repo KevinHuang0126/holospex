@@ -49,6 +49,13 @@ def main(argv: list[str] | None = None) -> int:
     train.add_argument("--epochs", type=int, default=3)
     train.add_argument("--batch-size", type=int, default=2)
     train.add_argument("--lr", type=float, default=0.001)
+    train.add_argument("--lr-schedule", choices=["none", "cosine"], default="none", help="Optional learning-rate decay per optimizer update")
+    train.add_argument("--warmup-epochs", type=int, default=0, help="Linear learning-rate warmup; must be less than total epochs")
+    train.add_argument("--weight-decay", type=float, default=0.01, help="AdamW weight decay (legacy default: 0.01)")
+    train.add_argument("--backbone-lr-multiplier", type=float, default=1.0, help="Scale the pretrained backbone learning rate relative to segmentation heads")
+    train.add_argument("--max-duration-seconds", type=float, help="Stop after a completed epoch once this duration elapses, saving checkpoints")
+    train.add_argument("--initial-checkpoint", type=Path, help="Warm-start model weights on the same train/val cases, with a fresh optimizer")
+    train.add_argument("--backbone-checkpoint", type=Path, help="Replace a ResNet50 backbone while retaining generic COCO context features; incompatible with initial-checkpoint or no-pretrained")
     train.add_argument("--width", type=int, default=448)
     train.add_argument("--height", type=int, default=256)
     train.add_argument("--device", choices=["auto", "cpu", "mps", "cuda"], default="auto")
@@ -57,6 +64,13 @@ def main(argv: list[str] | None = None) -> int:
     train.add_argument("--limit-val", type=int)
     train.add_argument("--seed", type=int, default=42)
     train.add_argument("--class-weighting", choices=["none", "balanced"], default="none", help="Optional capped inverse-square-root weights from resized training masks only")
+    train.add_argument("--architecture", choices=["deeplabv3_mobilenet_v3_large", "deeplabv3_resnet50", "deeplabv3plus_mobilenet_v3_large"], default="deeplabv3_mobilenet_v3_large", help="Architecture to compare while keeping the data and training recipe fixed")
+    train.add_argument("--augmentation", choices=["none", "mild"], default="none", help="Optional train-only paired flip and mild image brightness/contrast changes")
+    train.add_argument("--sampling", choices=["uniform", "case_balanced"], default="uniform", help="Optionally give each training surgical case equal expected sampling probability")
+    train.add_argument("--loss", choices=["ce", "ce_generalized_dice", "ce_lovasz"], default="ce", help="Keep cross-entropy or add an explicit foreground overlap objective")
+    train.add_argument("--dice-weight", type=float, default=1.0, help="Generalized Dice coefficient when --loss ce_generalized_dice is selected")
+    train.add_argument("--lovasz-weight", type=float, default=0.25, help="Main-head Lovasz coefficient when --loss ce_lovasz is selected")
+    train.add_argument("--auxiliary-loss-weight", type=float, default=0.4, help="Auxiliary-head objective weight in [0,10]; zero retains its parameters but disables its loss")
     evaluate = commands.add_parser("evaluate", help="Report per-class metrics on an explicitly selected split")
     evaluate.add_argument("--manifest", type=Path, required=True)
     evaluate.add_argument("--checkpoint", type=Path, required=True)
@@ -158,7 +172,13 @@ def main(argv: list[str] | None = None) -> int:
             report = train_model(load_json(args.manifest), args.output_dir, epochs=args.epochs,
                 batch_size=args.batch_size, lr=args.lr, width=args.width, height=args.height,
                 device=args.device, pretrained=not args.no_pretrained, limit_train=args.limit_train,
-                limit_val=args.limit_val, seed=args.seed, class_weighting=args.class_weighting)
+                limit_val=args.limit_val, seed=args.seed, class_weighting=args.class_weighting,
+                architecture=args.architecture, augmentation=args.augmentation, sampling=args.sampling,
+                loss=args.loss, dice_weight=args.dice_weight, lovasz_weight=args.lovasz_weight,
+                auxiliary_loss_weight=args.auxiliary_loss_weight,
+                lr_schedule=args.lr_schedule, warmup_epochs=args.warmup_epochs, weight_decay=args.weight_decay,
+                backbone_lr_multiplier=args.backbone_lr_multiplier, max_duration_seconds=args.max_duration_seconds,
+                initial_checkpoint=args.initial_checkpoint, backbone_checkpoint=args.backbone_checkpoint)
             print(json.dumps({key: value for key, value in report.items() if key not in {"history", "config"}}, indent=2))
         elif args.command == "evaluate":
             from .training import evaluate as evaluate_model

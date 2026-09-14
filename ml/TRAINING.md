@@ -1,5 +1,10 @@
 # ML work plan and commands
 
+For the bounded adaptive Vertex experiment controller, immutable source
+packaging, verified result reports, and current optimization options, see
+[AUTONOMOUS_TRAINING.md](AUTONOMOUS_TRAINING.md). Its completed comparisons and
+candidate decisions are recorded in [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md).
+
 This implements the **Person 1 — ML and imaging pipeline** section of the team
 to-do list. The first deliverable is a trained, measurable anatomy segmenter
 that exports our shared frame format. CVS answer keys remain independent
@@ -8,6 +13,17 @@ plastic physical model automatically; the AR teammate owns that camera path.
 For the current improved checkpoint and comparison commands, see
 [SMALL_ANATOMY.md](SMALL_ANATOMY.md). The commands below also preserve the initial
 baseline recipe so the improvements can be reproduced against a control.
+The completed loss experiment is documented in [DICE_RESULTS.md](DICE_RESULTS.md):
+three matched seeds found that CE + generalized Dice did not improve the
+aggregate small-anatomy result. The subsequent [resolution comparison](RESOLUTION_ITERATION.md)
+tested 896 × 512 and 1120 × 640; 1120 × 640 increased pooled small-anatomy IoU
+and artery recall but also increased false-positive area and inference cost, so
+the selected demo checkpoint remains unchanged. Additional data acquisition is
+kept separate from these comparisons.
+Acquired data, exact cloud object URIs and integration requirements are recorded
+in [DATA_CATALOG.json](DATA_CATALOG.json), [DATA_EXPANSION.md](DATA_EXPANSION.md)
+and [ADDITIONAL_MASK_DATA.md](ADDITIONAL_MASK_DATA.md). The larger acquisition
+does not yet provide a larger fully labeled six-class segmentation test set.
 
 ## Data we are using
 
@@ -249,8 +265,16 @@ testing; it does not supply ground truth for an accuracy score or CVS answers.
 3. **Video export completed:** all 120 frames of the prepared public excerpt
    have validated predictions. Connect the [media handoff](DEMO_MEDIA.md) to the
    web player and verify playback; that integration is still outstanding.
-4. **Next ML work:** extend training and evaluate improvements on validation,
-   inspect rare-class errors, and assess display thresholds. The public clip
+4. **Reviewed training targets prepared:** the [completed pilot review](REVIEW_PILOT_RESULTS.md)
+   supplies 49 approved masks across 18 additional training images. The lead
+   confirmed both flagged edits and selected the [partial-target policy](PARTIAL_TRAINING.md):
+   label uncontested reviewed pixels, ignore unknown and conflicting pixels,
+   and keep original validation/test samples unchanged. The combined manifest
+   has 361 train / 75 validation / 74 test images and passes loader/loss checks.
+5. **Reviewed-data comparison completed:** [six paired A100 runs](REVIEWED_DATA_RESULTS.md)
+   improved small pooled IoU in all three seeds, averaging 24.40% → 27.23%,
+   and equal-case IoU 22.59% → 24.65%. Continue with another bounded review
+   batch, concentrating on remaining plate errors, then re-evaluate. The public clip
    is not labeled evaluation data. Clinician review of lesson content remains
    separate from model metrics.
 
