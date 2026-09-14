@@ -286,6 +286,8 @@ class Controller:
             value = self.state.setdefault(key, default)
             if type(value) is not int or not 1 <= value <= upper:
                 raise ValueError(f"{key} must be an integer from 1 through {upper}")
+        if type(self.state.get("stop_when_exhausted", False)) is not bool:
+            raise ValueError("stop_when_exhausted must be a boolean")
         deadline = datetime.fromisoformat(self.state["deadline"])
         if deadline.tzinfo is None:
             raise ValueError("Controller deadline must include a timezone")
@@ -316,6 +318,21 @@ class Controller:
 
     def remaining(self):
         return (datetime.fromisoformat(self.state["deadline"]) - now()).total_seconds()
+
+    def batch_exhausted(self):
+        """Optionally close a bounded batch after terminal results are inspected.
+
+        Recorded collection errors still receive the normal bounded final audit;
+        they are never treated as verified results or a successful target hit.
+        """
+        runs = self.state["runs"]
+        return (self.state.get("stop_when_exhausted", False)
+                and len(runs) >= self.state["max_runs"]
+                and all(run["state"] in TERMINAL for run in runs)
+                and all(run["state"] != "JOB_STATE_SUCCEEDED"
+                        or verified_score(run) is not None
+                        or ("audit" not in run and bool(run.get("inspection_error")))
+                        for run in runs))
 
     def validate_template_proposal(self, template, receipt_path):
         """Only replace source code bound to a locally reviewed bundle receipt.
@@ -653,8 +670,10 @@ class Controller:
         while True:
             deadline = self.remaining() <= 0
             target = target_reached(self.state["runs"])
-            if deadline or target or self.state["status"] == "stopping":
-                self.state.setdefault("stop_reason", "target_reached" if target else "deadline_reached")
+            exhausted = self.batch_exhausted()
+            if deadline or target or exhausted or self.state["status"] == "stopping":
+                self.state.setdefault("stop_reason", "target_reached" if target else
+                                      "experiment_batch_complete" if exhausted and not deadline else "deadline_reached")
                 self.state["status"] = "stopping"
                 self.save()
                 if self.stop_owned_jobs():
@@ -678,7 +697,7 @@ class Controller:
                     self.save()
                     if self.remaining() <= 0 or target_reached(self.state["runs"]):
                         break
-            if self.remaining() <= 0 or target_reached(self.state["runs"]):
+            if self.remaining() <= 0 or target_reached(self.state["runs"]) or self.batch_exhausted():
                 continue
             active = [r for r in self.state["runs"] if r["state"] not in TERMINAL]
             # Reconcile/audit errors block new spend, but existing jobs keep running.

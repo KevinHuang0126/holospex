@@ -1,5 +1,9 @@
 # Four-hour autonomous training experiment
 
+This records the completed September 13 search. The later
+[reviewed batch 002](REVIEW_BATCH_002.md) produced the promoted
+[current model](CURRENT_MODEL.md) at **52.8251%** native foreground IoU.
+
 Started September 13, 2026 at 19:44:23 UTC and completed at the fixed
 **23:44:23 UTC (7:44:23 PM America/New_York)** deadline. All **15 owned Vertex
 jobs succeeded**, with **900 full epochs** and 15 independently audited results;

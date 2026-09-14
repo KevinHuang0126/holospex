@@ -1040,3 +1040,159 @@ Final evidence: [results report](outputs/autonomous-20260913/reports/final/RESUL
 [verified summary](outputs/autonomous-20260913/reports/final/summary.json),
 [three-seed comparison](outputs/autonomous-20260913/reports/replication-results.md),
 and [results chart](outputs/autonomous-20260913/diagnostics/plots-final/training-results.png).
+
+
+## September 14, 2026 — returned review batch002 and bounded retraining
+
+The lead supplied the second review export and explicitly requested training,
+promotion of the best local model, and logging. Source review SHA-256
+`f65147d81824c0610af5fb73150d2ffa2c9c3b8bd7f457825b5f4afe6fa56214`
+passed strict validation against bundle
+`91ad669b5a0b5225468908e25a1b344808571234ad3a36a928798af54e419586`.
+The original 141 decisions are preserved: 73 accepted, 48 edited, 19 rejected,
+one needs-expert. Two accepted masks had contradictory notes; the lead
+confirmed excluding both for this run. A separate resolution now records those
+exclusions without changing the review or its 121-mask import receipt.
+
+**Prepared supervision:** 119 training-eligible masks on 46 new images from 25
+TRAIN cases; 633,893 retained native foreground pixels and 16,216 conflict pixels
+ignored. The combined manifest contains 407 train / 75 val / 74 test images,
+preserving the original data and first pilot. Unknown/conflicting pixels stay
+255; same-class positives are unioned. Four no-supervision images are omitted.
+Localized plate overlap losses are recorded in the preparation report.
+
+**Frozen hypothesis and budget:** extra reviewed small-anatomy supervision may
+improve the leading surgical-MoCo ResNet50 recipe. Compare fresh seeds 42 and 43
+at 672 × 384, CE + 0.25 main Lovasz, auxiliary weight 0.4, batch 2, LR 0.0003,
+cosine schedule with three-epoch warmup, backbone multiplier 0.1, no augmentation,
+uniform sampling, and 53 epochs. This is 10,812 optimizer updates versus 10,860
+in the historical 60-epoch controls, within 0.44%; warmup length in updates,
+selection opportunities, and class weights differ and will be reported.
+At most two A100 jobs may launch in a new two-hour capped state; stop early once
+both runs are terminal and their results are audited. The old four-hour state
+remains closed. No test evaluation is planned.
+
+**Engineering:** target preparation now supports attributed training-only
+candidate exclusions; the controller supports optional closure after exhausting
+a finite launch budget. Original review bytes and historical behavior remain
+intact. The full local ML suite passes 323 tests. A separately verified immutable
+source archive and prepared-data package will be bound to each new launch.
+
+**Promotion rule:** compare every candidate with the verified existing run012
+leader (52.040885698% native foreground IoU; SHA-256
+`b037e85dff5f0ca552258d733cd02364717f99b57d93e6a0b10bbcd3c2ceea0f`).
+Publish the best checkpoint under `ml/weights/current/best.pt` with a selection
+receipt after evaluation; preserve old checkpoints and prediction identities.
+See [batch002 record](REVIEW_BATCH_002.md) and
+[event log](outputs/reviewed-batch002-20260914/events.jsonl).
+
+
+**Pre-launch verification and local promotion:** All 46 targets match independent
+RLE reconstruction and the actual 672 × 384 loader. All 1,020 inherited files,
+the original ordered sample prefix, and validation/test fingerprints match.
+Cloud staging verified 1,200 bound files; all 19 training/evaluation source
+files match the historical control archive. The extracted source suite also
+passes all 323 tests. Run012 was copied to `ml/weights/current/best.pt`, its
+checksum verified, and strict CPU loading plus one-frame inference and contract
+validation passed. The selection receipt preserves source identity and metrics.
+
+**Cloud execution pending:** Automatic approval review rejected the source
+upload because it requires explicit user authorization to export project and
+review materials to the private Google Cloud bucket. Approval for both concrete
+bundles and the two bounded A100 runs was requested. No new upload or training
+job has succeeded; training is not represented as complete. The frozen launch
+plan, source/data hashes, independent audits and event log are ready. The new
+UTC window will begin only with the approved launch.
+
+
+**Approved launch, September 14 04:25 UTC:** The user explicitly approved the
+previously described uploads and two bounded A100 runs. Both immutable bundles
+uploaded; cloud MD5/size matches were checked against local bytes. A fresh
+controller state fixes the window at 04:25:44–06:25:44 UTC, max two launches and
+two workers, with early closure after terminal result audits. Both 53-epoch
+recipes retain their frozen source/data/backbone identities. Submitted jobs:
+
+- Seed 42: `561146350624833536`, `review2-20260914-001-batch002-moco-lovasz-s42`.
+
+- Seed 43: `4395961433330810880`, `review2-20260914-002-batch002-moco-lovasz-s43`.
+
+Initial state is pending worker startup; submission does not establish training
+completion or improved metrics. See the live event log and controller state.
+
+**Training observed, 04:29 UTC:** Both workers completed epoch 1 training batches
+(204/204), confirming that the 407-image prepared dataset reached optimization.
+Live input-grid validation is kept separate from final native-grid selection.
+
+
+**Completed batch, September 14 at 05:11 UTC; promotion at 05:16 UTC:** Both jobs
+succeeded with all 53 requested epochs (106 total), no duration truncation and
+no additional launches. Worker completion times were 04:53:20/04:53:32 UTC;
+Vertex terminal times were 04:53:37/04:53:56 UTC. Local collection completed later,
+at 05:10:30/05:11:20 UTC; this collection/inspection delay is recorded without
+claiming an established cause. The controller then closed as
+`experiment_batch_complete` at 05:11:20 UTC, before the fixed 06:25:44 deadline.
+A fresh cloud query confirmed both jobs terminal.
+
+| Seed | Selected/completed epoch | Native foreground IoU | Small pooled IoU | Small equal-case IoU | Checkpoint SHA-256 |
+| --- | --- | ---: | ---: | ---: | --- |
+| 42 | 34/53 | 52.825114156% | 35.705296118% | 32.275247233% | `b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911` |
+| 43 | 39/53 | 51.917237681% | 34.373667789% | 31.421636817% | `13db3a323cf56fd4f28bb79f710d3294ea5c396b4d762023c0dfee5c4276285b` |
+
+All 36 collected artifacts verified against their byte counts and SHA-256.
+Both native validation audits recomputed confusion metrics, verified fixed
+75-frame/ten-case identities, ignored-pixel supports, class mapping and exact
+checkpoint/configuration identity. The paired helper independently re-audited
+both new runs and historical controls, including input-file fingerprints.
+Both seeds improve all three headline metrics. Mean paired improvements are
++0.5338 foreground, +0.7285 small-pooled and +2.7196 equal-case percentage points.
+Actual optimizer updates are 10,812 per new run versus 10,860 per historical run;
+class weights, sampling order, warmup updates and selection opportunities differ.
+These are historical matched-seed controls, not a new fully identical-schedule
+trial; no significance or clinical-validity claim is made.
+
+Seed 42 is promoted under `ml/weights/current/best.pt`: 52.8251% versus the previous
+52.0409% (+0.7842 points). Strict CPU loading and copied-file checksum checks
+passed. The previous selection receipt and original checkpoint are retained.
+Duct IoU gains 4.424 points, artery 4.209, plate 2.714; triangle-dissection loses 6.987,
+with precision down 15.821 points and recall up 17.577. Small-anatomy case IoU
+improves in 7/10 cases; the worst decline is case 131 (-2.688 points). Seed 43 improves
+6/10 cases, with its largest decline in case 146 (-6.826 points). Case means
+exclude classes absent from both prediction and truth; the number of scored
+classes can differ, notably for case 137. These limitations remain explicit
+despite the aggregate win. The separate [result audit](outputs/reviewed-batch002-20260914/independent-data-audit/result-audit.json)
+also confirms both complete schedules, checkpoint metadata and native confusion arithmetic.
+
+[Paired report](outputs/reviewed-batch002-20260914/reports/paired-final/RESULTS.md),
+[summary](outputs/reviewed-batch002-20260914/reports/paired-final/summary.json),
+[comparison chart](outputs/reviewed-batch002-20260914/reports/paired-final/comparison.png),
+and [promoted selection](outputs/reviewed-batch002-20260914/promoted-selection.json)
+record details. The chart was visually checked. Matplotlib dependencies were
+installed only under the ignored report-tools directory; the training and
+inference environment was not changed. The next evidence-backed labeling focus
+is consistency of triangle-dissection boundaries and its false-positive regions;
+no further experiment is launched in this completed budget.
+
+**Refreshed video handoff, September 14 at 05:29 UTC:** Local inference with the
+promoted checkpoint completed the full Gupta clip at threshold 0.5. The export
+ran from 05:16:32 to 05:29:23 UTC and contains all 1,056 frames, with no frame
+limit or partial output. Python contract validation passed. Independent decoding
+verified every exact presentation timestamp, frame number, original 1280 × 720
+dimension and all 1,056 raw masks. The actual frontend parser and matcher accept
+every result; the 10-second frame (240) displays ten predicted components with
+no matching-result warning. Unrelated media and reviewed-annotation source
+selections correctly return no match.
+
+The [new predictions.json](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
+is 71,053,910 bytes, SHA-256
+`d38c2788b109fe057e5734d770235fa014c1636aae39ac78b94b38300af14d8b`.
+It records model version `2026-09-14T04:29:29.757933Z-epoch-34`; the input clip
+retains SHA-256 `3bbc15cca1d23915fb79700aa28105cbb41989744836c434c1a2e74f59f7a927`.
+The previous run012 export remains intact. The event log stores the exact
+inference command; [identity verification](outputs/reviewed-batch002-20260914/gupta-current/identity-verification.json),
+[frontend verification](outputs/reviewed-batch002-20260914/gupta-current/frontend-verification.json)
+and [schema output](outputs/reviewed-batch002-20260914/gupta-current/schema-validation.log)
+record the checks. These establish file and display compatibility, not anatomical
+accuracy on this public clip. Current model, status, review-batch and demo-media
+documentation now point to the completed handoff. Both cloud jobs and the
+controller are stopped; no further training was launched. The batch's best
+verified foreground IoU remains 52.8251%, below the 75% target.

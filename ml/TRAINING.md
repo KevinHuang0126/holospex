@@ -1,5 +1,10 @@
 # ML work plan and commands
 
+For inference with the best verified local model, pass
+`--checkpoint ml/weights/current/best.pt`. The [current model record](CURRENT_MODEL.md)
+and checksum-bound selection receipt identify the actual checkpoint. Historical
+training commands below retain their original experiment paths.
+
 For the bounded adaptive Vertex experiment controller, immutable source
 packaging, verified result reports, and current optimization options, see
 [AUTONOMOUS_TRAINING.md](AUTONOMOUS_TRAINING.md). Its completed comparisons and
@@ -10,15 +15,15 @@ to-do list. The first deliverable is a trained, measurable anatomy segmenter
 that exports our shared frame format. CVS answer keys remain independent
 reviewed lesson content. Surgical-video segmentation will not recognize a
 plastic physical model automatically; the AR teammate owns that camera path.
-For the current improved checkpoint and comparison commands, see
-[SMALL_ANATOMY.md](SMALL_ANATOMY.md). The commands below also preserve the initial
+For the earlier MobileNet checkpoint comparison, see
+[SMALL_ANATOMY.md](SMALL_ANATOMY.md). The commands below preserve the initial
 baseline recipe so the improvements can be reproduced against a control.
 The completed loss experiment is documented in [DICE_RESULTS.md](DICE_RESULTS.md):
 three matched seeds found that CE + generalized Dice did not improve the
 aggregate small-anatomy result. The subsequent [resolution comparison](RESOLUTION_ITERATION.md)
 tested 896 × 512 and 1120 × 640; 1120 × 640 increased pooled small-anatomy IoU
 and artery recall but also increased false-positive area and inference cost, so
-the selected demo checkpoint remains unchanged. Additional data acquisition is
+the demo checkpoint was unchanged by that experiment. Additional data acquisition is
 kept separate from these comparisons.
 Acquired data, exact cloud object URIs and integration requirements are recorded
 in [DATA_CATALOG.json](DATA_CATALOG.json), [DATA_EXPANSION.md](DATA_EXPANSION.md)
@@ -237,7 +242,7 @@ video-only clip whose first decoded presentation timestamp is zero. See
 command. It rejects source files requiring an implicit clock offset.
 
 ```sh
-.venv/bin/python -m holospex_ml predict-video --checkpoint ml/outputs/baseline-001/best.pt --input PATH_TO_VIDEO --media-id UNIQUE_CLIP_ID --device mps --output ml/outputs/demo-video/predictions.json
+.venv/bin/python -m holospex_ml predict-video --checkpoint ml/weights/current/best.pt --input PATH_TO_VIDEO --media-id UNIQUE_CLIP_ID --device auto --output ml/outputs/demo-video/predictions.json
 .venv/bin/python -m holospex_ml validate ml/outputs/demo-video/predictions.json
 ```
 
@@ -262,20 +267,23 @@ testing; it does not supply ground truth for an accuracy score or CVS answers.
    classes audited, video splits checked, and timing assumptions recorded.
 2. **Baseline gate completed:** two fine-tunes, validation selection, one held-out
    evaluation, and original-coordinate exports are recorded in [STATUS.md](STATUS.md).
-3. **Video export completed:** all 120 frames of the prepared public excerpt
-   have validated predictions. Connect the [media handoff](DEMO_MEDIA.md) to the
-   web player and verify playback; that integration is still outstanding.
-4. **Reviewed training targets prepared:** the [completed pilot review](REVIEW_PILOT_RESULTS.md)
-   supplies 49 approved masks across 18 additional training images. The lead
-   confirmed both flagged edits and selected the [partial-target policy](PARTIAL_TRAINING.md):
-   label uncontested reviewed pixels, ignore unknown and conflicting pixels,
-   and keep original validation/test samples unchanged. The combined manifest
-   has 361 train / 75 validation / 74 test images and passes loader/loss checks.
-5. **Reviewed-data comparison completed:** [six paired A100 runs](REVIEWED_DATA_RESULTS.md)
-   improved small pooled IoU in all three seeds, averaging 24.40% → 27.23%,
-   and equal-case IoU 22.59% → 24.65%. Continue with another bounded review
-   batch, concentrating on remaining plate errors, then re-evaluate. The public clip
-   is not labeled evaluation data. Clinician review of lesson content remains
+3. **Current video export completed:** all 1,056 frames of the Gupta clip have
+   predictions from the promoted model, with verified decoded-frame identities
+   and frontend parser/matcher checks. Open **Camera prototype → Video** and
+   load the exact MP4 and JSON from the [media handoff](DEMO_MEDIA.md).
+   Integrating real imagery with reviewed lesson answers remains outstanding.
+4. **Reviewed training targets prepared:** the [first pilot](REVIEW_PILOT_RESULTS.md)
+   added 18 training images; [batch 002](REVIEW_BATCH_002.md) added another 46
+   using 119 masks after two explicit training exclusions. The current manifest
+   has **407 train / 75 validation / 74 test** images. The
+   [partial-target policy](PARTIAL_TRAINING.md) retains uncontested reviewed
+   pixels, ignores unknown/conflicting pixels and preserves original holdouts.
+5. **Latest comparison completed:** both batch-002 seeds improved foreground
+   and small-anatomy IoU over their historical controls. The
+   [promoted checkpoint](CURRENT_MODEL.md) reaches **52.8251% foreground IoU**.
+   Next investigate triangle-dissection false positives and boundary consistency,
+   since that class regressed despite the aggregate gain. The public clip is
+   not labeled evaluation data; clinician review of lesson content remains
    separate from model metrics.
 
 Temporal smoothing, propagation and live inference come after the measurable

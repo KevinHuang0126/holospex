@@ -1,5 +1,14 @@
 # Training targets from reviewed partial masks
 
+For later batches, the resolution record may include `excludedCandidates`, an
+array of `{candidateId, reason}` objects. These are explicit training exclusions
+of otherwise approved masks; they do not change the original review decision
+or import receipt. The converter preserves original eligibility separately from
+training eligibility and records reasons in manifest, summary and image
+provenance. Unknown, duplicate, nonapproved or malformed exclusions fail.
+The [second batch](REVIEW_BATCH_002.md) exercises this path on top of the first
+pilot manifest, preserving the inherited sample prefix and holdouts.
+
 The project lead confirmed that the notes on `22_41925` and `95_33000` described
 the original mask errors, and that the reviewer had already made the fixes.
 Both approved edits remain included. The lead also selected the conservative

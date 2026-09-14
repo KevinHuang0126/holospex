@@ -1,12 +1,44 @@
 # Public surgical video for the ML handoff
 
+## Current Gupta clip and model
+
+The current anatomy-visible excerpt is
+`ml/outputs/candidate-cvs-video/gupta-2023-cvs-anterior-posterior.mp4`: 44 seconds,
+1,056 frames, 1280 × 720 at 24 fps. It combines source intervals 467–487 and
+500–524 seconds from Vishal Gupta's 2023 *How to achieve the critical view of
+safety for safe laparoscopic cholecystectomy: Technical aspects*, Supplementary
+Video 1, doi:10.14701/ahbps.22-064. Retain author credit and CC BY-NC 4.0 terms.
+[Exact local provenance](outputs/candidate-cvs-video/media-provenance.json)
+records source URLs, transformations, licenses and hashes.
+
+The current [predictions.json](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
+uses the promoted batch-002 seed-42 checkpoint, version
+`2026-09-14T04:29:29.757933Z-epoch-34`, and covers all 1,056 frames.
+Decoded-frame identities, raw masks and the actual frontend parser/matcher
+passed verification. Its media ID is
+`gupta-2023-cvs-anterior-posterior-467-487-500-524`; MP4 SHA-256 is
+`3bbc15cca1d23915fb79700aa28105cbb41989744836c434c1a2e74f59f7a927`.
+Open **Camera prototype → Video**, load that MP4 then its JSON, choose ML
+prediction, Learn, threshold 0.5 and Show overlays. Confirm **1,056 validated frame results** in
+the footer; at 10 seconds, frame 240 matches with visible predictions.
+The new JSON SHA-256 is
+`d38c2788b109fe057e5734d770235fa014c1636aae39ac78b94b38300af14d8b`.
+The older `ml/outputs/gupta-cvs-lovasz/predictions.json` retains run012 identity.
+Use the stable checkpoint documented in
+[CURRENT_MODEL.md](CURRENT_MODEL.md) for future exports into fresh directories.
+
+## Historical Zhou excerpt
+
+The handoff below retains its original source and prediction identities; it is
+not the current anatomy-visible clip.
+
 The source is **Supplementary Video 2** from Zhou et al. (2024), *Cystic plate
 approach in laparoscopic cholecystectomy: a consecutive retrospective analysis*,
 doi:10.3389/fsurg.2024.1487568. The article and supplementary material are
 distributed under CC BY 4.0. Source footage is separate from the Endoscapes
 training data; this clip has no segmentation answer key.
 
-The latest predictions use `small-004-resolution/best.pt` and are in
+This earlier export uses `small-004-resolution/best.pt` and is in
 `ml/outputs/demo-video-small-anatomy/`. They pair with the existing prepared MP4
 in `ml/outputs/demo-video-v1/`. The earlier baseline predictions are retained.
 
