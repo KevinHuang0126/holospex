@@ -1,13 +1,19 @@
 # Teammate handoff: candidate anatomy-mask review
 
+The second batch has now been returned and validated: 141 decisions, 121
+approved candidate masks, and 119 enrolled for training after two explicit lead
+exclusions. The combined dataset has 407 train / 75 val / 74 test images.
+See [batch002 import and training record](REVIEW_BATCH_002.md). The description
+below is retained as the original batch handoff record.
+
 The next review batch is ready: **50 images from 25 new TRAIN cases, with 141
 model-generated candidate masks**: 45 ducts, 34 arteries, 30 plates and 32
 triangle-dissection regions. Each case contributes two images separated by at
 least 750 source frames. All 20 first-pilot cases, original Seg50 cases and
 held-out cases are excluded. This batch follows the [reviewed-data training
 results](REVIEWED_DATA_RESULTS.md); duct and plate boundaries deserve particular
-attention. These new proposals have zero review decisions and have not entered
-training. The selected demo model is unchanged.
+attention. At handoff these proposals had zero review decisions and had not
+entered training. The model selection at that time was unchanged.
 
 The original pilot contained 20 images from 20 cases and 52 candidates:
 16 arteries, 16 ducts, 9 plates and 11 triangle-dissection regions.

@@ -453,6 +453,113 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(saved["controller_status"], "interrupted")
         self.assertIn("controller_stopped_at", saved)
 
+    def test_opt_in_batch_closes_after_terminal_results_without_launching_or_cancelling(self):
+        state = fixture_state()
+        state.update(stop_when_exhausted=True, max_runs=2,
+                     runs=[completed("one"), {"name": "two", "state": "JOB_STATE_FAILED",
+                                              "recipe": loop.recipe("two", "failed trial")}])
+        controller = self.controller(state)
+        with patch.object(loop, "command") as cloud, patch.object(loop.time, "sleep") as sleep:
+            controller.run()
+        cloud.assert_not_called()
+        sleep.assert_not_called()
+        saved = json.loads(self.path.read_text())
+        self.assertEqual(saved["stop_reason"], "experiment_batch_complete")
+        self.assertEqual(saved["status"], "experiment_batch_complete")
+        self.assertEqual(saved["controller_status"], "stopped")
+        self.assertIsNone(saved["controller_pid"])
+        self.assertEqual(saved["deadline"], state["deadline"])
+        self.assertEqual(saved["queue"], state["queue"])
+        self.assertFalse(loop.target_reached(saved["runs"]))
+
+    def test_batch_waits_for_success_audit_then_closes_without_an_extra_poll(self):
+        state = fixture_state()
+        pending = completed("pending")
+        pending.pop("audit")
+        state.update(stop_when_exhausted=True, max_runs=1, runs=[pending])
+        controller = self.controller(state)
+        self.assertFalse(controller.batch_exhausted())
+
+        def collect(run, *, timeout_seconds):
+            run["audit"] = completed("audited")["audit"]
+
+        with patch.object(loop, "command", return_value=json.dumps({"state": "JOB_STATE_SUCCEEDED"})) as cloud, \
+                patch.object(controller, "collect_successful_run", side_effect=collect) as audit, \
+                patch.object(loop.time, "sleep") as sleep:
+            controller.state["runs"][0]["job_name"] = "job/one"
+            controller.save()
+            controller.run()
+        self.assertEqual(cloud.call_count, 1)
+        self.assertEqual(audit.call_count, 1)
+        sleep.assert_not_called()
+        self.assertEqual(controller.state["status"], "experiment_batch_complete")
+
+    def test_batch_collection_failure_gets_bounded_final_retry_and_remains_unverified(self):
+        state = fixture_state()
+        pending = completed("pending")
+        pending.pop("audit")
+        pending["job_name"] = "job/one"
+        state.update(stop_when_exhausted=True, max_runs=1, runs=[pending])
+        controller = self.controller(state)
+        with patch.object(loop, "command", return_value=json.dumps({"state": "JOB_STATE_SUCCEEDED"})) as cloud, \
+                patch.object(controller, "collect_successful_run", side_effect=ValueError("artifact checksum mismatch")) as audit, \
+                patch.object(loop.time, "sleep") as sleep:
+            controller.run()
+        self.assertEqual(cloud.call_count, 1)
+        self.assertEqual(audit.call_count, 2)
+        self.assertLessEqual(audit.call_args.kwargs["timeout_seconds"], loop.FINAL_COLLECTION_TIMEOUT_SECONDS)
+        sleep.assert_not_called()
+        self.assertEqual(controller.state["status"], "experiment_batch_complete")
+        self.assertEqual(controller.state["runs"][0]["inspection_error"], "artifact checksum mismatch")
+        self.assertNotIn("audit", controller.state["runs"][0])
+        self.assertFalse(loop.target_reached(controller.state["runs"]))
+
+    def test_exhausted_batch_keeps_waiting_when_flag_is_omitted_or_false(self):
+        for value in (None, False):
+            with self.subTest(flag=value):
+                state = fixture_state()
+                state.update(max_runs=1, runs=[completed("one")])
+                if value is not None:
+                    state["stop_when_exhausted"] = value
+                controller = self.controller(state)
+                with patch.object(loop, "command") as cloud, \
+                        patch.object(loop.time, "sleep", side_effect=InterruptedError("fixture stop")):
+                    with self.assertRaises(InterruptedError):
+                        controller.run()
+                cloud.assert_not_called()
+                self.assertEqual(controller.state["status"], "running")
+                self.assertNotIn("stop_reason", controller.state)
+
+    def test_batch_requires_all_owned_jobs_terminal_and_audits_valid_before_early_stop(self):
+        for status in ("SUBMIT_INTENT", "JOB_STATE_PENDING", "JOB_STATE_RUNNING"):
+            with self.subTest(state=status):
+                state = fixture_state()
+                run = completed("one")
+                run.update(state=status, inspection_error="unresolved")
+                state.update(stop_when_exhausted=True, max_runs=1, runs=[run])
+                self.assertFalse(self.controller(state).batch_exhausted())
+        state = fixture_state()
+        run = completed("one")
+        run["audit"]["verified"] = False
+        state.update(stop_when_exhausted=True, max_runs=1, runs=[run])
+        self.assertFalse(self.controller(state).batch_exhausted())
+        state.update(max_runs=2, runs=[completed("one")])
+        self.assertFalse(self.controller(state).batch_exhausted())
+
+    def test_batch_completion_does_not_override_deadline_or_target(self):
+        for reason in ("deadline_reached", "target_reached"):
+            with self.subTest(reason=reason):
+                state = fixture_state()
+                state.update(stop_when_exhausted=True, max_runs=1,
+                             runs=[completed("one", score=0.8 if reason == "target_reached" else 0.5)])
+                if reason == "deadline_reached":
+                    state["deadline"] = START.isoformat()
+                controller = self.controller(state)
+                with patch.object(loop, "command") as cloud:
+                    controller.run()
+                cloud.assert_not_called()
+                self.assertEqual(controller.state["stop_reason"], reason)
+
     def test_reference_is_visible_in_status_but_cannot_trigger_target_or_cancellation(self):
         state = fixture_state()
         state.update(reference_runs=[completed("historical-reference", score=0.8)], queue=[],
@@ -620,7 +727,7 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(controller.state["status"], "deadline_reached")
 
     def test_inactive_session_never_resumes_or_calls_cloud(self):
-        for status in ("target_reached", "deadline_reached", "paused", "max_runs_reached"):
+        for status in ("target_reached", "deadline_reached", "experiment_batch_complete", "paused", "max_runs_reached"):
             state = fixture_state()
             state["status"] = status
             controller = self.controller(state)
@@ -634,6 +741,13 @@ class ControllerTests(unittest.TestCase):
             state = fixture_state()
             state[key] = value
             with self.assertRaisesRegex(ValueError, key):
+                self.controller(state)
+
+    def test_stop_when_exhausted_requires_explicit_boolean(self):
+        for value in (0, 1, "true", None, [], {}):
+            state = fixture_state()
+            state["stop_when_exhausted"] = value
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "stop_when_exhausted"):
                 self.controller(state)
 
     def test_direct_launch_cannot_exceed_parallel_or_total_cap(self):

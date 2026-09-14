@@ -1,4 +1,41 @@
-# ML run record — September 13, 2026
+# ML run record — September 14, 2026
+
+The [second reviewed-data training batch](REVIEW_BATCH_002.md) is **complete**.
+Both approved A100 jobs succeeded, completing **53 epochs each / 106 total**.
+All 36 collected artifacts passed checksum verification; independent audits
+recomputed the unchanged 75-image native validation metrics. The controller
+closed at **05:11:20 UTC**, ahead of its 06:25:44 deadline, with no owned jobs
+remaining active.
+
+The best local checkpoint is now **`ml/weights/current/best.pt`**, batch-002 seed 42,
+selected at epoch 34/53. Native six-class foreground IoU improved from
+**52.0409% to 52.8251% (+0.7842 percentage points)**. Small-anatomy pooled IoU
+improved **34.6151% → 35.7053%**, and equal-case small IoU **28.2247% → 32.2752%**.
+The other new seed scored 51.9172%, improving its matched 51.6340% control.
+Across the two paired seeds, mean gains were +0.5338 foreground, +0.7285 small
+pooled, and +2.7196 equal-case percentage points.
+
+The winner improves duct, artery and plate IoU, but triangle-dissection IoU
+falls 6.987 points, with more false positives; some validation cases regress.
+These tradeoffs are recorded in the [paired report](outputs/reviewed-batch002-20260914/reports/paired-final/RESULTS.md).
+No test inference or clinical validation was performed. The full local and
+extracted-source suites pass **323 tests**. Strict CPU loading of the promoted
+checkpoint passed. The [refreshed Gupta predictions](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
+now cover all 1,056 frames and pass decoded-frame identity checks and the actual
+frontend parser/matcher, including the 10-second frame.
+
+The new review contributes 119 eligible masks on 46 images from 25 TRAIN cases
+(after two explicit lead exclusions), giving 407 train / 75 val / 74 test images.
+Original reviews, inherited data, historical checkpoints and old prediction
+exports are preserved. See [current model usage](CURRENT_MODEL.md), the
+[selection receipt](weights/current/selection.json), and [experiment log](EXPERIMENT_LOG.md).
+
+## Historical September 13 results
+
+All sections below preserve the September 13 run record. References to the
+selected demo, pending integration and test counts describe that earlier stage;
+use the September 14 summary above and [CURRENT_MODEL.md](CURRENT_MODEL.md)
+for the current checkpoint and video handoff.
 
 The [four-hour autonomous search](AUTONOMOUS_TRAINING.md) is **complete**. The
 controller stopped at its 23:44:23 UTC deadline; all **15 owned Vertex jobs
@@ -12,10 +49,10 @@ pooled small-anatomy IoU** and **28.2247% equal-case small-anatomy IoU**. The
 (range 50.8585–52.0409%). See the [final results](outputs/autonomous-20260913/reports/final/RESULTS.md),
 [seed comparison](outputs/autonomous-20260913/reports/replication-results.md),
 and [experiment log](EXPERIMENT_LOG.md). The local ML suite passes **312 tests**.
-The research leader has not been promoted to the demo, and this search did not
+The research leader was not promoted at the close of this search, which did not
 evaluate the test split.
 
-The current selected demo checkpoint is **`small-004-resolution/best.pt`**, selected at epoch 9
+The selected demo checkpoint at that stage was **`small-004-resolution/best.pt`**, selected at epoch 9
 of a 12-epoch, 672 × 384 training run. On the same original-resolution validation
 labels, small-anatomy mean IoU improves **18.60% → 24.36%**, equal-case small-anatomy
 IoU improves **16.20% → 25.73%**, and six-class foreground IoU improves
@@ -89,7 +126,7 @@ macro-IoU** and **35.57% test foreground macro-IoU / 46.01% macro-Dice**.
 This is an early hackathon baseline; small-structure errors remain substantial.
 It does not provide reviewed lesson answers, CVS decisions, or clinical validation.
 
-## Cloud training and implemented experiment options
+### Cloud training and implemented experiment options
 
 All five Vertex jobs reached **JOB_STATE_SUCCEEDED** on September 13, 2026,
 using NVIDIA A100 GPUs. Each completed training and original-grid validation;
@@ -120,7 +157,7 @@ and evaluate original-resolution validation labels. Exact resume is not
 implemented: optimizer, RNG, and sampler state are not saved. Interrupted
 attempts retain distinct identities. No cloud test-set results are claimed here.
 
-## Data and preprocessing
+### Data and preprocessing
 
 - Official Endoscapes-Seg50: 493 original labeled frames, preserved unchanged.
 - Usable split: **343 train / 75 validation / 74 test** frames from **30 / 10 / 10
@@ -132,7 +169,7 @@ attempts retain distinct identities. No cloud test-set results are claimed here.
   cystic plate, hepatocystic triangle dissection, tool. Source PNG IDs are
   remapped explicitly; they are not the same as the channel order.
 - Images resize bilinearly to **448 × 256** for the earlier local controls,
-  **672 × 384** for the current checkpoint and original cloud batch, and the
+  **672 × 384** for the then-selected checkpoint and original cloud batch, and the
   completed resolution candidates used **896 × 512** and **1120 × 640**; masks use nearest neighbor.
   ImageNet normalization and frozen BatchNorm are shared by all runs.
 - Background, gallbladder, and tool account for **97.01% of scored training
@@ -144,7 +181,7 @@ excluded frame, source provenance, and the explicit 25-fps filename assumption.
 That assumption is not a verified playback timebase for an arbitrary clip.
 Dataset access, licensing, source references, and commands are in [TRAINING.md](TRAINING.md).
 
-## Initial controlled comparison
+### Initial controlled comparison
 
 Both runs use Torchvision `deeplabv3_mobilenet_v3_large`, generic
 `COCO_WITH_VOC_LABELS_V1` initialization with new seven-channel output heads,
@@ -180,7 +217,7 @@ Test was evaluated for the selected balanced checkpoint after validation selecti
 | Hepatocystic triangle dissection | 8.75% | 16.10% | 0.36% | 0.72% |
 | Tool | 70.49% | 82.69% | 69.88% | 82.27% |
 
-## Initial artifacts and identities
+### Initial artifacts and identities
 
 Shared model ID: `holospex-deeplabv3-mobilenetv3`.
 
@@ -199,7 +236,7 @@ Both configs record manifest SHA-256
 (canonical JSON metadata; this digest does not hash image/mask contents).
 Run outputs, data, and weights are local Git-ignored artifacts.
 
-## Observed failures and handoff boundaries
+### Observed failures and handoff boundaries
 
 The [balanced validation comparison](outputs/baseline-002-balanced/comparison-val.png)
 shows six deterministically selected cases; it was not ranked for good predictions.
@@ -229,7 +266,7 @@ uncalibrated, and filtering does not establish correctness or resolve these fail
   [export audit](outputs/demo-video-v1/predictions.info.json), and
   [media provenance](outputs/demo-video-v1/media-provenance.json) accompany it.
   No segmentation ground truth or accuracy score exists for this public clip.
-  Updated predictions using the current checkpoint are in
+  Updated predictions using the then-selected checkpoint are in
   [demo-video-small-anatomy](outputs/demo-video-small-anatomy/predictions.json),
   paired with the same prepared MP4. All 120 updated frames pass both contract
   validators and preserve the earlier export's exact presentation timestamps.
@@ -241,7 +278,7 @@ uncalibrated, and filtering does not establish correctness or resolve these fail
   to the frontend and test playback alignment. The website still uses synthetic
   assets, so the complete integrated lesson remains unfinished.
 
-## Checks and next experiment
+### Checks and next experiment
 
 All **169 ML tests pass**. They cover label conversion/ignore policy, leakage,
 loss/metrics, safe checkpoint provenance, original-frame geometry, invalid
@@ -264,7 +301,7 @@ warnings from their bundled libraries. Both full clip exports completed, with
 no observed crash. The pinned environment is an offline prototype; isolate
 decoding in a fresh process before building a persistent live service.
 
-The next [offline anatomy-review ZIP](MASK_REVIEW.md) is ready: **50 images from
+At that stage, the next [offline anatomy-review ZIP](MASK_REVIEW.md) was ready: **50 images from
 25 new TRAIN cases, 141 SAM proposals**, excluding every first-pilot case and
 all original Seg50/held-out cases. Vertex job `5340186834892750848` completed
 proposal generation. The package includes START-HERE.txt and the same editor,

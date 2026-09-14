@@ -100,11 +100,13 @@ def _validate_base(base):
 
 
 def _validate_resolution(record, bundle, review, bundle_sha, review_sha, base_sha):
-    review_io._fields(record, {
+    required_fields = {
         "formatVersion", "artifactType", "bundleId", "bundleSha256", "reviewSha256", "baseManifestSha256",
         "resolvedAt", "resolvedBy", "overlapPolicy", "unknownPixelPolicy", "noteClarifications",
         "authorization", "evidence",
-    }, "resolution record")
+    }
+    optional_fields = {"excludedCandidates"} if isinstance(record, dict) and "excludedCandidates" in record else set()
+    review_io._fields(record, required_fields | optional_fields, "resolution record")
     _require(record["formatVersion"] == "1.0.0" and record["artifactType"] == "review_training_resolution",
              "Unsupported resolution record")
     _require(record["bundleId"] == bundle["bundleId"] and record["bundleSha256"] == bundle_sha
@@ -133,6 +135,19 @@ def _validate_resolution(record, bundle, review, bundle_sha, review_sha, base_sh
                  and clarification["reviewedMaskConfirmed"] is True,
                  "Clarification must confirm the reviewed mask and describe the original-proposal note")
         seen.add(candidate)
+    exclusions = record.get("excludedCandidates", [])
+    _require(type(exclusions) is list, "excludedCandidates must be an array")
+    excluded = {}
+    for exclusion in exclusions:
+        review_io._fields(exclusion, {"candidateId", "reason"}, "candidate exclusion")
+        candidate = exclusion["candidateId"]
+        _require(isinstance(candidate, str) and candidate in decisions and candidate not in excluded,
+                 "Unknown or duplicate exclusion candidate")
+        _require(decisions[candidate]["decision"] in {"accepted", "edited"},
+                 "Only accepted or edited candidates can be excluded from training")
+        review_io._text(exclusion["reason"], "candidate exclusion reason")
+        excluded[candidate] = exclusion["reason"]
+    return excluded
 
 
 def _read_base_mask(sample):
@@ -206,9 +221,11 @@ def prepare_training(bundle_path, review_path, base_manifest_path, resolution_re
     validation = review_io.validate_review(review, bundle, bundle_sha)
     _require(review["reviewer"]["reviewScope"] == "anatomy", "Only anatomy-scope reviews can prepare training targets")
     source_ids, base_cases = _validate_base(base)
-    _validate_resolution(resolution, bundle, review, bundle_sha, review_sha, base_sha)
-    eligible = set(validation["eligibleCandidateIds"])
-    _require(bool(eligible), "Review has no eligible accepted/edited anatomy candidates")
+    excluded = _validate_resolution(resolution, bundle, review, bundle_sha, review_sha, base_sha)
+    review_eligible = set(validation["eligibleCandidateIds"])
+    _require(bool(review_eligible), "Review has no eligible accepted/edited anatomy candidates")
+    eligible = review_eligible - excluded.keys()
+    _require(bool(eligible), "No eligible anatomy candidates remain after training exclusions")
     for image in bundle["images"]:
         _require(image["split"] == "train", "Only TRAIN review images may be added")
         _require(_video_id(image["videoId"]) not in base_cases, "Review case overlaps an existing base train/val/test case")
@@ -250,7 +267,11 @@ def prepare_training(bundle_path, review_path, base_manifest_path, resolution_re
             is_eligible = candidate["id"] in eligible
             candidate_record = {"candidateId": candidate["id"], "structureId": candidate["structureId"],
                 "sourceAnnotationId": candidate["sourceAnnotationId"], "proposalMaskSha256": candidate["maskSha256"],
-                "decision": decision["decision"] if decision else "missing", "eligible": is_eligible}
+                "decision": decision["decision"] if decision else "missing", "eligible": is_eligible,
+                "reviewEligible": candidate["id"] in review_eligible,
+                "trainingExcluded": candidate["id"] in excluded}
+            if candidate["id"] in excluded:
+                candidate_record["exclusionReason"] = excluded[candidate["id"]]
             if decision:
                 pixels = review_io.decode_rle(decision["mask"])
                 candidate_record.update(reviewedMaskSha256=_sha(pixels), notes=decision["notes"],
@@ -275,6 +296,7 @@ def prepare_training(bundle_path, review_path, base_manifest_path, resolution_re
             "split": "train", "width": image["width"], "height": image["height"], "imageSha256": image["imageSha256"],
             "reviewer": review["reviewer"], "bundleSha256": bundle_sha, "reviewSha256": review_sha,
             "resolutionRecordSha256": resolution_sha, "candidates": candidate_records,
+            "excludedCandidateCount": sum(candidate["trainingExcluded"] for candidate in candidate_records),
             "included": retained > 0, "reviewedForegroundUnionPixels": int(union.sum()),
             "conflictingPixels": int(conflict.sum()), "retainedPixels": retained,
             "unreviewedPixels": int((coverage == 0).sum()), "ignoredPixels": int((target == IGNORE).sum()),
@@ -323,12 +345,15 @@ def prepare_training(bundle_path, review_path, base_manifest_path, resolution_re
                 "resolutionRecordSha256": resolution_sha}
     combined["reviewedPartialProvenance"] = {**bindings, "bundleId": bundle["bundleId"], "reviewer": review["reviewer"],
         "preparationPath": str(destination / "summary.json"), "overlapPolicy": "ignore_conflicts",
-        "unknownPixelPolicy": "ignore", "trainingStarted": False}
+        "unknownPixelPolicy": "ignore", "excludedCandidates": copy.deepcopy(resolution.get("excludedCandidates", [])),
+        "trainingStarted": False}
     for split in ("val", "test"):
         _require([s for s in combined["samples"] if s["split"] == split]
                  == [s for s in base["samples"] if s["split"] == split], "Held-out samples changed unexpectedly")
     summary = {"baseSampleCount": len(base["samples"]), "reviewCandidateCount": validation["candidateCount"],
-        "eligibleCandidateCount": len(eligible), "addedTrainImageCount": len(new_samples),
+        "eligibleCandidateCount": len(review_eligible), "trainingEligibleCandidateCount": len(eligible),
+        "excludedCandidateCount": len(excluded), "excludedCandidates": copy.deepcopy(resolution.get("excludedCandidates", [])),
+        "addedTrainImageCount": len(new_samples),
         "omittedImageCount": len(bundle["images"]) - len(new_samples), "combinedCounts": stats["counts"],
         **dict(totals), "retainedPixelsByClass": retained_by_class, "trainingStarted": False}
     preparation = {"formatVersion": "1.0.0", "artifactType": "reviewed_partial_training_preparation",

@@ -18,6 +18,13 @@ synthetic fixtures. Real-asset integration, model calibration, and device
 validation are still needed. Reviewed lesson content and glasses integration
 remain future work.
 
+**Current ML model:** the September 14 batch-002 DeepLabV3–ResNet50 checkpoint
+at `ml/weights/current/best.pt` leads the saved native-validation comparisons
+with **52.8251% foreground IoU**. See the [current model handoff](ml/CURRENT_MODEL.md)
+for its exact identity, verified artifact retrieval, inference command and
+matching video predictions. A Git checkout does not include the weights or
+prediction exports; the browser's bundled lesson remains synthetic.
+
 ## Start the browser app
 
 Use Node 22.12+ (Node 24 LTS is a suitable team baseline) and npm.

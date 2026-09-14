@@ -213,6 +213,101 @@ class ReviewedTrainingPreparationTests(unittest.TestCase):
                     self.assertEqual(int(target[18, x]), 255)
             self.assertEqual(int(target[0, 0]), 255)
 
+    def test_training_exclusions_preserve_review_and_imported_approvals(self):
+        from PIL import Image
+
+        with tempfile.TemporaryDirectory() as temporary:
+            value = fixture(Path(temporary))
+            original_review = value["review_path"].read_bytes()
+            exclusions = [
+                {"candidateId": "endoscapes-box-1", "reason": "Accepted note contradicts anatomy identity."},
+                {"candidateId": "endoscapes-box-4", "reason": "Edited boundary needs further review."},
+            ]
+            value["resolution"]["excludedCandidates"] = exclusions
+            write_json(value["resolution_path"], value["resolution"])
+            receipt = review_io.import_review(value["bundle_path"], value["review_path"], value["root"] / "import")
+            self.assertEqual(len(receipt["eligibleMasks"]), 5)
+            result, manifest = prepare(value)
+            target = np.asarray(Image.open(manifest["samples"][-1]["maskPath"]))
+            expected = value["expected"].copy()
+            expected[2:8, 2:8] = 255  # Only the excluded first duct covered these pixels.
+            expected[12:16, 2:8] = 255  # Excluding an edited mask also removes its corrections.
+            np.testing.assert_array_equal(target, expected)
+            self.assertEqual(int(target[3, 9]), 4)  # The second approved duct still supplies its overlap.
+            self.assertEqual(int(target[6, 12]), 255)  # Remaining duct/artery conflict is still ignored.
+            summary = result["summary"]
+            self.assertEqual(summary["eligibleCandidateCount"], 5)
+            self.assertEqual(summary["trainingEligibleCandidateCount"], 3)
+            self.assertEqual(summary["excludedCandidateCount"], 2)
+            self.assertEqual(summary["excludedCandidates"], exclusions)
+            preparation = json.loads(Path(result["preparationPath"]).read_text())
+            record = preparation["images"][0]
+            self.assertEqual(record["excludedCandidateCount"], 2)
+            by_id = {candidate["candidateId"]: candidate for candidate in record["candidates"]}
+            for number, original_decision in ((1, "accepted"), (4, "edited")):
+                candidate = by_id[f"endoscapes-box-{number}"]
+                self.assertEqual(candidate["decision"], original_decision)
+                self.assertTrue(candidate["reviewEligible"])
+                self.assertTrue(candidate["trainingExcluded"])
+                self.assertFalse(candidate["eligible"])
+                self.assertTrue(candidate["exclusionReason"])
+            self.assertEqual(manifest["reviewedPartialProvenance"]["excludedCandidates"], exclusions)
+            self.assertFalse(preparation["humanDecisionsChanged"])
+            self.assertEqual(value["review_path"].read_bytes(), original_review)
+            snapshot = Path(result["manifestPath"]).parent / "provenance/source-review.json"
+            self.assertEqual(snapshot.read_bytes(), original_review)
+
+    def test_excluding_other_class_preserves_remaining_positive_overlap(self):
+        from PIL import Image
+
+        with tempfile.TemporaryDirectory() as temporary:
+            value = fixture(Path(temporary))
+            value["resolution"]["excludedCandidates"] = [
+                {"candidateId": "endoscapes-box-3", "reason": "Artery approval is disputed."},
+            ]
+            write_json(value["resolution_path"], value["resolution"])
+            _, manifest = prepare(value)
+            target = np.asarray(Image.open(manifest["samples"][-1]["maskPath"]))
+            expected = value["expected"].copy()
+            expected[5:11, 11:17] = 255
+            expected[5:8, 11:14] = 4  # A retained duct approval supplies these formerly conflicting pixels.
+            np.testing.assert_array_equal(target, expected)
+            self.assertEqual(int(target[9, 15]), 255)  # Excluded-only pixels are unknown, never background.
+
+    def test_invalid_training_exclusions_fail_before_creating_output(self):
+        invalid_exclusions = [
+            None,
+            {},
+            [{"candidateId": "endoscapes-box-999", "reason": "Unknown candidate."}],
+            [{"candidateId": "endoscapes-box-1", "reason": " "}],
+            [{"candidateId": "endoscapes-box-1", "reason": 5}],
+            [{"candidateId": "endoscapes-box-1", "reason": "First reason."},
+             {"candidateId": "endoscapes-box-1", "reason": "Duplicate reason."}],
+            [{"candidateId": "endoscapes-box-1", "reason": "Reason.", "decision": "rejected"}],
+        ] + [[{"candidateId": f"endoscapes-box-{number}", "reason": "Not an eligible approval."}]
+             for number in (6, 7, 8, 9)]
+        for exclusions in invalid_exclusions:
+            with self.subTest(exclusions=exclusions), tempfile.TemporaryDirectory() as temporary:
+                value = fixture(Path(temporary))
+                value["resolution"]["excludedCandidates"] = exclusions
+                write_json(value["resolution_path"], value["resolution"])
+                output = value["root"] / "not-created" / "prepared"
+                with self.assertRaises(ValueError):
+                    prepare(value, output)
+                self.assertFalse(output.parent.exists())
+
+    def test_excluding_every_approved_candidate_cannot_publish_empty_supervision(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            value = fixture(Path(temporary))
+            value["resolution"]["excludedCandidates"] = [
+                {"candidateId": decision["candidateId"], "reason": "Awaiting annotation clarification."}
+                for decision in value["review"]["decisions"] if decision["decision"] in {"accepted", "edited"}
+            ]
+            write_json(value["resolution_path"], value["resolution"])
+            with self.assertRaisesRegex(ValueError, "after training exclusions"):
+                prepare(value)
+            self.assertFalse((value["root"] / "prepared").exists())
+
     def test_base_samples_files_and_heldout_splits_are_preserved_exactly(self):
         with tempfile.TemporaryDirectory() as temporary:
             value = fixture(Path(temporary))
