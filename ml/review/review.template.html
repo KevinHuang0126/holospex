@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Holospex · Anatomy mask review</title>
+<style>
+:root{color-scheme:dark;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e7eff8;background:#0a1018;font-size:14px}*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button,input,select,textarea{border:1px solid #3a4b60;border-radius:6px;background:#111d2b;color:#e7eff8}button{padding:8px 11px;cursor:pointer;line-height:1.25}button:hover:enabled{border-color:#83bfe8;background:#1c3044}button:disabled{opacity:.38;cursor:not-allowed}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #b5e1ff;outline-offset:3px}button.primary{background:#a9dafa;color:#0c1b27;border-color:#a9dafa;font-weight:650}button[aria-pressed="true"]{border-color:#c1e6ff;background:#254862;color:#e9f6ff}input,select{padding:8px;min-width:0}input[type=checkbox]{accent-color:#a9dafa}input[type=range]{accent-color:#a9dafa;padding:0}textarea{padding:10px;resize:vertical;width:100%;min-height:76px;line-height:1.45}a{color:#b5ddfa}h1,h2,p{margin:0}header{padding:22px 28px 16px;border-bottom:1px solid #263448;display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:10px;letter-spacing:.17em;font-weight:750;color:#93b5d2;text-transform:uppercase;margin-bottom:6px}h1{font-size:24px;font-weight:630;letter-spacing:-.02em}.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.small{font-size:12px;color:#9eafc2;line-height:1.5}.shell{padding:18px 28px 26px;max-width:1800px;margin:auto}.banner{background:#142536;border:1px solid #2d4d65;border-radius:8px;padding:11px 14px;font-size:12px;line-height:1.55;color:#c3dbee;margin-bottom:13px}.reviewer{display:flex;gap:10px;align-items:end;flex-wrap:wrap;background:#101a26;border:1px solid #29394d;padding:13px 15px;border-radius:8px;margin-bottom:14px}.field{display:flex;flex-direction:column;gap:6px}.field label,.field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#a5b8cb}.reviewer .name{width:210px}.reviewer .scope{width:235px}.reviewer-note{flex:1;min-width:210px;max-width:580px;align-self:center;margin-left:8px}.statusbar{display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:6px 18px;margin-bottom:13px;font-size:11px;color:#9aadc2}.statusbar strong{color:#d0e6f7;font-weight:500}#message{padding:10px 13px;background:#2f2633;color:#f2d8ec;border:1px solid #63405f;border-radius:7px;margin-bottom:12px;font-size:13px;line-height:1.5}.restore{display:flex;gap:10px;align-items:center;background:#2b271c;border:1px solid #635637;border-radius:8px;padding:12px 14px;margin-bottom:13px}.restore span{flex:1;font-size:12px;line-height:1.5;color:#e0d6b8}.workstation{display:grid;grid-template-columns:minmax(0,1fr) 322px;gap:16px}.workspace{min-width:0;border:1px solid #2b3a4e;border-radius:10px;overflow:hidden;background:#0c1420}.imagebar{padding:13px 15px;border-bottom:1px solid #2a394c;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.imagebar select{min-width:210px;flex:1;max-width:520px}.navbuttons{display:flex;gap:6px}.image-meta{margin-left:auto;text-align:right;line-height:1.6;font-size:11px;color:#9eb2c7}.tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px 15px;padding:11px 14px;border-bottom:1px solid #28384b;background:#121e2b}.toolgroup{display:flex;gap:4px}.compact button{font-size:12px;padding:7px 9px}.slider-control{display:flex;align-items:center;gap:7px;font-size:11px;color:#b6c7d8}.slider-control input{width:85px}.slider-control output{min-width:32px;text-align:right;color:#e5eff9}.toggles{display:flex;gap:10px;align-items:center;font-size:11px;color:#b8c9d9}.toggles label{display:flex;align-items:center;gap:4px}.viewport{height:clamp(360px,calc(100vh - 380px),680px);overflow:auto;background:#05090e;overscroll-behavior:contain;position:relative}.canvas-holder{min-width:100%;min-height:100%;width:max-content;display:grid;place-items:center;padding:18px}.stage{position:relative;line-height:0;isolation:isolate;flex:none}.stage img,.stage canvas,.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}.stage img{z-index:0}.stage canvas{z-index:1;touch-action:none;cursor:grab}.stage svg{z-index:2;pointer-events:none}.brush-ring{position:absolute;pointer-events:none;border:1px solid white;border-radius:50%;box-shadow:0 0 0 1px #111;z-index:3;transform:translate(-50%,-50%)}.caption{padding:11px 15px;border-top:1px solid #243448;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;font-size:11px;color:#9eb5ca;line-height:1.5}.side{min-width:0}.panel{padding:16px;background:#111c29;border:1px solid #2d3c4f;border-radius:9px;margin-bottom:13px}.panel h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#c9dbeb;margin-bottom:12px}.candidate-list{display:flex;flex-direction:column;gap:6px}.candidate{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;text-align:left;gap:9px;width:100%;padding:10px 9px;background:#0d1722}.candidate.current{border-color:#a0d1f3;background:#1b3144}.swatch{height:10px;width:10px;border-radius:3px;flex:none}.candidate-name{font-size:12px;line-height:1.4;overflow-wrap:anywhere}.badge{font-size:9px;line-height:1.3;text-transform:uppercase;letter-spacing:.03em;padding:4px 5px;border-radius:4px;background:#293442;color:#b9c8d9}.badge.accepted,.badge.edited{background:#1d493c;color:#b3e2cd}.badge.rejected{background:#4e303a;color:#efbfca}.badge.needs_expert{background:#4c4127;color:#ead6a3}.candidate-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;line-height:1.3;margin-bottom:10px}.proposal-details{font-size:11px;line-height:1.7;color:#9eb4c9}.warnings{margin:10px 0;color:#dec9a7;font-size:11px;line-height:1.55;overflow-wrap:anywhere}.decision-status{font-size:12px;line-height:1.5;color:#c5d8e9;margin:11px 0}.decision-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:11px 0}.decision-buttons button{font-size:12px;min-height:42px}.notes-label{display:block;font-size:11px;color:#a7bbcf;margin-bottom:6px}.decision-help{font-size:11px;line-height:1.55;color:#95aabe;margin-top:9px}.footer-note{font-size:11px;line-height:1.65;color:#8ca4ba;margin-top:15px;max-width:1050px}.danger{color:#edc3c7;border-color:#6a444d}.divider{border-top:1px solid #2b3b4f;margin:13px 0}.check-scope{font-size:11px;color:#d5c49e;line-height:1.5;margin-top:7px}[hidden]{display:none!important}@media(max-width:1150px){.workstation{grid-template-columns:minmax(0,1fr) 292px}.shell{padding:15px}.tools{gap:10px}.reviewer-note{margin-left:0}.viewport{height:450px}header{padding:20px 16px}}@media(max-width:850px){.workstation{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr;gap:12px}.panel{margin:0}.viewport{height:430px}.image-meta{margin-left:0;text-align:left}.reviewer .name,.reviewer .scope{flex:1;min-width:180px}.reviewer-note{flex-basis:100%;max-width:none}header{align-items:start}.statusbar{line-height:1.6}}@media(max-width:560px){header{flex-direction:column;gap:13px}.side{display:block}.panel{margin-bottom:12px}.viewport{height:360px}.tools{padding:10px}.imagebar select{min-width:170px}.slider-control input{width:72px}.shell{padding:12px}.image-meta{width:100%}}
+</style>
+</head>
+<body>
+<header><div><div class="eyebrow">Holospex / annotation workstation</div><h1>Review anatomy masks</h1></div><div class="header-actions"><button id="import">Resume from JSON</button><button id="export" class="primary" disabled>Export review JSON</button><input type="file" id="import-file" accept="application/json,.json" hidden></div></header>
+<main class="shell">
+  <div class="banner"><strong>Model-generated proposals, awaiting review.</strong> Check the anatomy and full mask boundaries before deciding. A model quality score is not anatomy confidence. This offline review does not provide lesson answers or start training.</div>
+  <div class="restore" id="restore-banner" hidden><span id="restore-text"></span><button id="restore">Restore saved review</button><button id="discard-saved">Discard saved copy</button></div>
+  <div id="message" role="alert" hidden></div>
+  <form class="reviewer" id="reviewer-form">
+    <div class="field name"><label for="reviewer-name">Your name</label><input id="reviewer-name" autocomplete="name" placeholder="Name recorded with decisions" required maxlength="200"></div>
+    <div class="field scope"><label for="reviewer-scope">Review scope</label><select id="reviewer-scope" required><option value="">Choose your review scope</option><option value="anatomy">Anatomy — assess correctness</option><option value="technical">Technical — check rendering / geometry</option></select></div>
+    <button type="submit" id="start" class="primary">Start review</button><button type="button" id="new-review" class="danger" hidden>Clear and start new review</button>
+    <p class="small reviewer-note" id="reviewer-help">Choose anatomy only when you can assess the anatomical labels. Technical review checks the rendering and geometry; it does not approve anatomy for training.</p>
+  </form>
+  <div class="statusbar"><span id="progress"></span><span><span id="local-status">Browser save: no active review</span> · <strong id="export-status">No JSON exported</strong></span></div>
+  <div class="workstation">
+    <section class="workspace" aria-label="Image and mask editor">
+      <div class="imagebar"><div class="navbuttons"><button id="previous-image" aria-label="Previous image">←</button><button id="next-image" aria-label="Next image">→</button></div><select id="image-select" aria-label="Select source image"></select><div id="image-meta" class="image-meta"></div></div>
+      <div class="tools">
+        <div class="toolgroup compact" role="group" aria-label="Editing tool"><button data-tool="pan" aria-pressed="true" title="Drag to pan the image">Pan</button><button data-tool="paint" aria-pressed="false" disabled title="Paint pixels into the selected anatomy mask">Brush</button><button data-tool="erase" aria-pressed="false" disabled title="Erase pixels from the selected anatomy mask">Erase</button></div>
+        <label class="slider-control">Brush <input id="brush-size" type="range" min="1" max="60" value="12" aria-label="Brush diameter in original pixels"><output id="brush-value">12 px</output></label>
+        <div class="toolgroup compact"><button id="undo" disabled>Undo</button><button id="reset" disabled>Reset mask</button></div>
+        <label class="slider-control">Zoom <input id="zoom" type="range" min="20" max="400" value="100" aria-label="Image zoom"><output id="zoom-value">100%</output></label><button id="fit">Fit</button>
+        <label class="slider-control">Opacity <input id="opacity" type="range" min="0" max="100" value="45" aria-label="Mask opacity"><output id="opacity-value">45%</output></label>
+        <div class="toggles"><label><input id="show-mask" type="checkbox" checked>Mask</label><label><input id="show-box" type="checkbox" checked>Source box</label></div>
+      </div>
+      <div id="viewport" class="viewport"><div class="canvas-holder"><div id="stage" class="stage"><img id="source-image" alt="Source surgical image"><canvas id="mask-canvas" aria-label="Pixel mask editor. Choose Brush or Erase and drag on the image; use the zoom control for detailed work."></canvas><svg id="box-svg" aria-label="Original source annotation box" role="img"></svg><div id="brush-ring" class="brush-ring" hidden></div></div></div></div>
+      <div class="caption"><span id="mask-caption"></span><span id="cursor-coordinates">Coordinates use original image pixels</span></div>
+    </section>
+    <aside class="side">
+      <section class="panel"><h2>Candidates in this image</h2><div id="candidate-list" class="candidate-list"></div><div class="divider"></div><div class="navbuttons"><button id="previous-candidate">← Previous</button><button id="next-candidate">Next →</button></div><p class="decision-help">Review one structure at a time. Source boxes guide the proposal; they do not define the correct boundary.</p></section>
+      <section class="panel"><h2>Current decision</h2><div id="candidate-title" class="candidate-title"></div><div id="proposal-details" class="proposal-details"></div><p id="warnings" class="warnings"></p><p id="decision-status" class="decision-status" aria-live="polite"></p><label for="notes" class="notes-label">Notes <span class="small">— required for Reject or Needs expert</span></label><textarea id="notes" placeholder="Describe uncertainty, missing anatomy, or an incorrect boundary…" disabled></textarea><div class="decision-buttons"><button id="accept" class="primary" disabled>Accept unchanged</button><button id="approve-edit" class="primary" disabled>Approve edit</button><button id="reject" disabled>Reject</button><button id="needs-expert" disabled>Needs expert</button></div><p id="decision-help" class="decision-help">Enter your name and scope to begin. Browsing does not record an approval.</p><p id="scope-note" class="check-scope"></p></section>
+    </aside>
+  </div>
+  <p class="footer-note">1. Check the image and selected anatomy. 2. Toggle the mask and source box, then zoom to inspect edges. Brush and Erase edit full-resolution pixels and preserve holes. 3. Record a decision for each candidate. Any mask or note change returns it to Pending. 4. Export JSON before closing or sharing your review. Browser storage is best effort and stays on this browser; the downloaded JSON is the portable saved review.</p>
+</main>
+<script>window.HOLOSPEX_REVIEW = __HOLOSPEX_REVIEW_DATA__;</script>
+<script>
+'use strict';
+// REVIEW_CORE_START — dependency-free validation is also exercised by Node tests.
+const ReviewCore = (() => {
+  const reviewKeys = ['formatVersion','artifactType','bundleId','bundleSha256','reviewer','exportedAt','decisions'];
+  const decisionKeys = ['candidateId','imageId','imageSha256','proposalMaskSha256','decision','mask','notes','reviewedAt','reviewMilliseconds'];
+  const states = new Set(['pending','accepted','edited','rejected','needs_expert']);
+  const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const fail = message => { throw new Error(message); };
+  function keys(value, expected, label) {
+    if (!object(value) || Object.keys(value).length !== expected.length || expected.some(key => !Object.hasOwn(value,key))) fail(`${label} has missing or unexpected fields.`);
+  }
+  function utc(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(value)) return false;
+    const time = new Date(value);
+    const normalized = value.replace(/(?:\.(\d{1,6}))?(?:Z|\+00:00)$/, (_, part) => `.${(part || '').padEnd(3,'0').slice(0,3)}Z`);
+    return Number.isFinite(time.getTime()) && time.toISOString() === normalized;
+  }
+  function decodeRLE(rle,width,height) {
+    keys(rle,['encoding','width','height','counts'],'Mask');
+    if (rle.encoding !== 'rle-row-major-v1' || rle.width !== width || rle.height !== height || !Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width < 1 || height < 1) fail('Mask encoding or dimensions do not match the source image.');
+    const size = width * height;
+    if (!Number.isSafeInteger(size) || size > 100000000 || !Array.isArray(rle.counts) || !rle.counts.length || rle.counts.length > size + 1) fail('Invalid mask runs.');
+    const result = new Uint8Array(size);
+    let offset = 0;
+    rle.counts.forEach((count,index) => {
+      if (!Number.isSafeInteger(count) || count < (index === 0 ? 0 : 1) || offset + count > size) fail('Mask runs must be valid positive integers and fit the image.');
+      if (index % 2) result.fill(1,offset,offset + count);
+      offset += count;
+    });
+    if (offset !== size) fail('Mask runs do not cover the complete image.');
+    return result;
+  }
+  function encodeRLE(pixels,width,height) {
+    if (pixels.length !== width * height) fail('Pixel array has the wrong dimensions.');
+    const counts = [];
+    let value = 0, length = 0;
+    for (const pixel of pixels) {
+      if (pixel !== 0 && pixel !== 1) fail('Mask pixels must be zero or one.');
+      if (pixel === value) length++;
+      else { counts.push(length); length = 1; value = pixel; }
+    }
+    counts.push(length);
+    return {encoding:'rle-row-major-v1',width,height,counts};
+  }
+  const sameMask = (a,b) => a.length === b.length && a.every((value,index) => value === b[index]);
+  const pixelCount = pixels => pixels.reduce((sum,pixel) => sum + pixel,0);
+  function indexBundle(bundle,bundleSha256) {
+    if (!object(bundle) || bundle.formatVersion !== '1.0.0' || bundle.artifactType !== 'candidate_mask_bundle' || typeof bundle.bundleId !== 'string' || !bundle.bundleId.trim() || !/^[a-f0-9]{64}$/.test(bundleSha256) || !Array.isArray(bundle.images) || !bundle.images.length || !Array.isArray(bundle.classes)) fail('Invalid proposal bundle.');
+    const entries = new Map(), images = new Map(), classes = new Map();
+    bundle.classes.forEach(value => {
+      if (!object(value) || typeof value.structureId !== 'string' || !value.structureId || typeof value.label !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(value.color) || classes.has(value.structureId)) fail('Invalid or duplicate anatomy class.');
+      classes.set(value.structureId,value);
+    });
+    bundle.images.forEach((image,imageIndex) => {
+      if (!object(image) || typeof image.id !== 'string' || !image.id || images.has(image.id) || typeof image.videoId !== 'string' || !Number.isSafeInteger(image.frameNumber) || image.frameNumber < 0 || image.id !== `${image.videoId}_${image.frameNumber}` || image.split !== 'train' || !/^[a-f0-9]{64}$/.test(image.imageSha256) || !Array.isArray(image.candidates) || !image.candidates.length) fail('Invalid or duplicate image identity.');
+      images.set(image.id,image);
+      image.candidates.forEach((candidate,candidateIndex) => {
+        if (!object(candidate) || typeof candidate.id !== 'string' || !candidate.id || entries.has(candidate.id) || !Number.isSafeInteger(candidate.sourceAnnotationId) || candidate.id !== `endoscapes-box-${candidate.sourceAnnotationId}` || candidate.source !== 'model_generated' || !classes.has(candidate.structureId) || !/^[a-f0-9]{64}$/.test(candidate.maskSha256) || !Array.isArray(candidate.bboxXYWH) || candidate.bboxXYWH.length !== 4 || !candidate.bboxXYWH.every(Number.isFinite)) fail('Invalid or duplicate proposal identity.');
+        entries.set(candidate.id,{candidate,image,imageIndex,candidateIndex,original:decodeRLE(candidate.mask,image.width,image.height)});
+      });
+    });
+    return {bundle,bundleSha256,entries,images,classes};
+  }
+  function validateReview(review,index) {
+    keys(review,reviewKeys,'Review');
+    if (review.formatVersion !== '1.0.0' || review.artifactType !== 'candidate_mask_review' || review.bundleId !== index.bundle.bundleId || review.bundleSha256 !== index.bundleSha256) fail('This review belongs to a different proposal bundle.');
+    keys(review.reviewer,['name','reviewScope'],'Reviewer');
+    if (typeof review.reviewer.name !== 'string' || !review.reviewer.name.trim() || /[\u0000-\u001f]/.test(review.reviewer.name) || !['anatomy','technical'].includes(review.reviewer.reviewScope)) fail('A named reviewer and valid scope are required.');
+    if (!utc(review.exportedAt) || !Array.isArray(review.decisions) || review.decisions.length > index.entries.size) fail('Invalid export date or decision list.');
+    const decisions = new Map();
+    review.decisions.forEach(item => {
+      keys(item,decisionKeys,'Decision');
+      const entry = index.entries.get(item.candidateId);
+      if (!entry || decisions.has(item.candidateId)) fail('Unknown or duplicate candidate in the review.');
+      if (item.imageId !== entry.image.id || item.imageSha256 !== entry.image.imageSha256 || item.proposalMaskSha256 !== entry.candidate.maskSha256) fail('Candidate, image, or original proposal identity does not match.');
+      if (!states.has(item.decision) || typeof item.notes !== 'string' || typeof item.reviewMilliseconds !== 'number' || !Number.isFinite(item.reviewMilliseconds) || item.reviewMilliseconds < 0) fail('Invalid decision, notes, or review duration.');
+      if (item.decision === 'pending' ? item.reviewedAt !== null : !utc(item.reviewedAt)) fail('Pending decisions need a null review date; recorded decisions need a UTC date.');
+      const pixels = decodeRLE(item.mask,entry.image.width,entry.image.height);
+      const equal = sameMask(pixels,entry.original);
+      if (['accepted','edited'].includes(item.decision) && !pixelCount(pixels)) fail('An empty mask cannot be accepted or approved.');
+      if (item.decision === 'accepted' && !equal) fail('An accepted mask must equal the original proposal.');
+      if (item.decision === 'edited' && equal) fail('An edited approval must differ from the original proposal.');
+      if (['rejected','needs_expert'].includes(item.decision) && !item.notes.trim()) fail('Reject and Needs expert require a note.');
+      decisions.set(item.candidateId,{mask:pixels,decision:item.decision,notes:item.notes,reviewedAt:item.reviewedAt,reviewMilliseconds:item.reviewMilliseconds});
+    });
+    return {reviewer:{name:review.reviewer.name,reviewScope:review.reviewer.reviewScope},decisions};
+  }
+  return {decodeRLE,encodeRLE,sameMask,pixelCount,indexBundle,validateReview,utc};
+})();
+// REVIEW_CORE_END
+window.HolospexReviewCore = ReviewCore;
+
+(() => {
+  const $ = id => document.getElementById(id);
+  const embedded = window.HOLOSPEX_REVIEW;
+  let index;
+  try { index = ReviewCore.indexBundle(embedded.bundle,embedded.bundleSha256); }
+  catch(error) { $('message').hidden = false; $('message').textContent = `Cannot open this bundle: ${error.message}`; return; }
+  const bundle = index.bundle;
+  const ctx = $('mask-canvas').getContext('2d');
+  const source = $('source-image');
+  const storageKey = `holospex-mask-review-v1:${index.bundleSha256}`;
+  const decisionNames = {pending:'Pending',accepted:'Accepted',edited:'Edit approved',rejected:'Rejected',needs_expert:'Needs expert'};
+  let state, reviewer = null, imageIndex = 0, candidateIndex = 0, tool = 'pan', zoom = 1, imageReady = false;
+  let dirty = false, lastExportAt = null, saveTimer, savedAt = null, savedReview = null;
+  let pointer = null, lastActivity = Date.now(), startedAt = performance.now(), renderRequested = false;
+  let autosaveAvailable = true;
+  function newStates() {
+    return new Map([...index.entries].map(([id,entry]) => [id,{mask:entry.original.slice(),decision:'pending',notes:'',reviewedAt:null,reviewMilliseconds:0,history:[]}]));
+  }
+  state = newStates();
+  const entry = () => index.entries.get(bundle.images[imageIndex].candidates[candidateIndex].id);
+  const current = () => state.get(entry().candidate.id);
+  function message(value) { $('message').textContent = value; $('message').hidden = !value; }
+  function dirtyState() { dirty = true; updateSaveLabels(); scheduleSave(); }
+  function accumulateTime() {
+    const now = performance.now();
+    if (reviewer && document.visibilityState === 'visible' && Date.now() - lastActivity < 60000) {
+      const elapsed = Math.min(60000,Math.max(0,now - startedAt));
+      if (elapsed > 0) { current().reviewMilliseconds += elapsed; dirty = true; }
+    }
+    startedAt = now;
+  }
+  function pending() { current().decision = 'pending'; current().reviewedAt = null; }
+  function remember() { current().history.push(current().mask.slice()); if (current().history.length > 15) current().history.shift(); }
+  function reviewObject() {
+    if (!reviewer) throw new Error('Enter your name and review scope first.');
+    return {formatVersion:'1.0.0',artifactType:'candidate_mask_review',bundleId:bundle.bundleId,bundleSha256:index.bundleSha256,reviewer:{...reviewer},exportedAt:new Date().toISOString(),decisions:[...index.entries].map(([id,item]) => {
+      const value = state.get(id);
+      return {candidateId:id,imageId:item.image.id,imageSha256:item.image.imageSha256,proposalMaskSha256:item.candidate.maskSha256,decision:value.decision,mask:ReviewCore.encodeRLE(value.mask,item.image.width,item.image.height),notes:value.notes,reviewedAt:value.reviewedAt,reviewMilliseconds:value.reviewMilliseconds};
+    })};
+  }
+  function updateSaveLabels() {
+    $('local-status').textContent = !reviewer ? 'Browser save: no active review' : !autosaveAvailable ? 'Browser save unavailable — export JSON' : savedAt ? `Browser copy saved ${new Date(savedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : 'Browser copy not saved yet';
+    $('export-status').textContent = lastExportAt ? `${dirty ? 'Changes since export' : 'JSON exported'} · ${new Date(lastExportAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : dirty ? 'Not yet exported — download JSON to keep a copy' : 'No JSON exported';
+  }
+  function saveLocal() {
+    clearTimeout(saveTimer);
+    if (!reviewer) return;
+    try {
+      const now = new Date().toISOString();
+      localStorage.setItem(storageKey,JSON.stringify({storageVersion:1,savedAt:now,lastExportAt,dirty,review:reviewObject()}));
+      savedAt = now; autosaveAvailable = true;
+    } catch (_) { autosaveAvailable = false; }
+    updateSaveLabels();
+  }
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveLocal,500); }
+  function configureReviewer() {
+    $('reviewer-name').disabled = Boolean(reviewer); $('reviewer-scope').disabled = Boolean(reviewer);
+    $('start').hidden = Boolean(reviewer); $('new-review').hidden = !reviewer;
+    $('export').disabled = !reviewer;
+    document.querySelectorAll('[data-tool]').forEach(button => { button.disabled = button.dataset.tool !== 'pan' && !reviewer; });
+    $('notes').disabled = !reviewer;
+    if (reviewer) {
+      $('reviewer-name').value = reviewer.name; $('reviewer-scope').value = reviewer.reviewScope;
+      $('reviewer-help').textContent = `Decisions are attributed to ${reviewer.name}. Name and scope stay locked; use “Clear and start new review” to change authorship.`;
+    } else $('reviewer-help').textContent = 'Choose anatomy only when you can assess the anatomical labels. Technical review checks the rendering and geometry; it does not approve anatomy for training.';
+    $('scope-note').textContent = reviewer?.reviewScope === 'technical' ? 'Technical scope: accepted and edited decisions are not anatomy-approved training supervision.' : '';
+  }
+  function colorParts() { return index.classes.get(entry().candidate.structureId).color.match(/[a-fA-F0-9]{2}/g).map(v => parseInt(v,16)); }
+  function renderMask() {
+    renderRequested = false;
+    const value = current(), image = entry().image, rgb = colorParts();
+    const pixels = ctx.createImageData(image.width,image.height);
+    for (let i = 0; i < value.mask.length; i++) {
+      if (!value.mask[i]) continue;
+      const offset = i * 4; pixels.data[offset] = rgb[0]; pixels.data[offset+1] = rgb[1]; pixels.data[offset+2] = rgb[2]; pixels.data[offset+3] = 255;
+    }
+    ctx.putImageData(pixels,0,0);
+  }
+  function requestRender() { if (!renderRequested) { renderRequested = true; requestAnimationFrame(renderMask); } }
+  function layerSettings() {
+    const opacity = Number($('opacity').value);
+    $('mask-canvas').style.opacity = $('show-mask').checked ? String(opacity / 100) : '0';
+    $('box-svg').toggleAttribute('hidden',!$('show-box').checked);
+    $('opacity-value').textContent = `${opacity}%`;
+    // Hiding the visualization also disables painting so edits cannot happen unseen.
+    $('mask-canvas').style.cursor = tool === 'pan' ? 'grab' : !$('show-mask').checked ? 'not-allowed' : 'crosshair';
+    if (!$('show-mask').checked) $('brush-ring').hidden = true;
+  }
+  function updateZoom(value,center = true) {
+    const viewport = $('viewport');
+    const oldWidth = $('stage').getBoundingClientRect().width || entry().image.width;
+    const ratioX = (viewport.scrollLeft + viewport.clientWidth / 2) / (oldWidth + 36);
+    const ratioY = (viewport.scrollTop + viewport.clientHeight / 2) / (entry().image.height * zoom + 36);
+    zoom = Math.max(.2,Math.min(4,value));
+    $('stage').style.width = `${entry().image.width * zoom}px`; $('stage').style.height = `${entry().image.height * zoom}px`;
+    $('zoom').value = String(Math.round(zoom * 100)); $('zoom-value').textContent = `${Math.round(zoom * 100)}%`;
+    if (center) { viewport.scrollLeft = ratioX * (entry().image.width * zoom + 36) - viewport.clientWidth / 2; viewport.scrollTop = ratioY * (entry().image.height * zoom + 36) - viewport.clientHeight / 2; }
+  }
+  function fit() { updateZoom(Math.min(($('viewport').clientWidth - 36) / entry().image.width,($('viewport').clientHeight - 36) / entry().image.height),false); $('viewport').scrollLeft = 0; $('viewport').scrollTop = 0; }
+  function showBox() {
+    const svg = $('box-svg'), image = entry().image, candidate = entry().candidate;
+    svg.setAttribute('viewBox',`0 0 ${image.width} ${image.height}`); svg.replaceChildren();
+    const box = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    ['x','y','width','height'].forEach((name,i) => box.setAttribute(name,String(candidate.bboxXYWH[i])));
+    box.setAttribute('fill','none'); box.setAttribute('stroke','#ffffff'); box.setAttribute('stroke-width','1.5'); box.setAttribute('stroke-dasharray','6 4'); box.setAttribute('vector-effect','non-scaling-stroke');
+    svg.append(box);
+  }
+  function updateProgress() {
+    const values = [...state.values()], done = values.filter(item => item.decision !== 'pending').length;
+    const approved = values.filter(item => ['accepted','edited'].includes(item.decision)).length;
+    $('progress').textContent = `${done} / ${values.length} decisions recorded · ${approved} accepted or edited · ${bundle.images.length} TRAIN images`;
+  }
+  function updateCandidates() {
+    $('candidate-list').replaceChildren();
+    entry().image.candidates.forEach((candidate,i) => {
+      const button = document.createElement('button'); button.className = `candidate${i === candidateIndex ? ' current' : ''}`; button.type = 'button'; button.setAttribute('aria-pressed',String(i === candidateIndex));
+      const anatomy = index.classes.get(candidate.structureId);
+      const swatch = document.createElement('span'); swatch.className = 'swatch'; swatch.style.backgroundColor = anatomy.color; swatch.setAttribute('aria-hidden','true');
+      const label = document.createElement('span'); label.className = 'candidate-name'; label.textContent = anatomy.label;
+      const badge = document.createElement('span'); badge.className = `badge ${state.get(candidate.id).decision}`; badge.textContent = decisionNames[state.get(candidate.id).decision];
+      button.append(swatch,label,badge); button.addEventListener('click',() => navigate(imageIndex,i)); $('candidate-list').append(button);
+    });
+    $('previous-image').disabled = imageIndex === 0; $('next-image').disabled = imageIndex === bundle.images.length - 1;
+    $('previous-candidate').disabled = imageIndex === 0 && candidateIndex === 0;
+    $('next-candidate').disabled = imageIndex === bundle.images.length - 1 && candidateIndex === entry().image.candidates.length - 1;
+  }
+  function updateDecision() {
+    const value = current(), count = ReviewCore.pixelCount(value.mask), equal = ReviewCore.sameMask(value.mask,entry().original);
+    $('decision-status').textContent = `${decisionNames[value.decision]}${value.reviewedAt ? ` · ${new Date(value.reviewedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : ' — no recorded decision'}${!equal && value.decision === 'pending' ? ' · unapproved edits' : ''}`;
+    $('mask-caption').textContent = `${count.toLocaleString()} mask pixels · ${equal ? 'Original proposal pixels' : 'Edited pixels'} · ${entry().image.width} × ${entry().image.height}`;
+    $('accept').disabled = !reviewer || !imageReady || !equal || !count; $('approve-edit').disabled = !reviewer || !imageReady || equal || !count;
+    $('reject').disabled = !reviewer; $('needs-expert').disabled = !reviewer;
+    $('undo').disabled = !reviewer || !value.history.length;
+    $('reset').disabled = !reviewer || (equal && value.decision === 'pending');
+    $('decision-help').textContent = !reviewer ? 'Enter your name and scope to begin. Browsing does not record an approval.' : !count ? 'The mask is empty. Restore or paint pixels before approval, or record Reject / Needs expert with a note.' : equal ? 'Accept unchanged records approval of these exact proposal pixels. Use Needs expert when anatomy is uncertain.' : 'Edits are pending until you choose Approve edit. Reset restores the original proposal and clears the current decision.';
+    updateCandidates(); updateProgress(); updateSaveLabels();
+  }
+  function showCurrent(changeImage) {
+    const item = entry(), anatomy = index.classes.get(item.candidate.structureId);
+    if (changeImage) {
+      imageReady = false; $('stage').style.visibility = 'hidden';
+      const expectedImageId = item.image.id;
+      source.onload = () => { if (entry().image.id !== expectedImageId) return; imageReady = true; $('stage').style.visibility = 'visible'; renderMask(); updateDecision(); };
+      source.onerror = () => { imageReady = false; $('stage').style.visibility = 'hidden'; updateDecision(); message('The source image could not be opened. Approval is disabled for this image.'); };
+      const dataUrl = embedded.images[item.image.id];
+      if (typeof dataUrl !== 'string' || !/^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(dataUrl)) throw new Error('Source image data is missing or invalid.');
+      source.src = dataUrl; source.alt = `Case ${item.image.videoId}, frame ${item.image.frameNumber}: original surgical image`;
+      $('mask-canvas').width = item.image.width; $('mask-canvas').height = item.image.height;
+      $('image-select').value = String(imageIndex); fit();
+    }
+    $('image-meta').textContent = `Image ${imageIndex+1} / ${bundle.images.length} · case ${item.image.videoId} · frame ${item.image.frameNumber}`;
+    $('candidate-title').replaceChildren();
+    const swatch = document.createElement('span'); swatch.className = 'swatch'; swatch.style.backgroundColor = anatomy.color;
+    const title = document.createElement('span'); title.textContent = anatomy.label; $('candidate-title').append(swatch,title);
+    const score = item.candidate.proposalScore;
+    $('proposal-details').textContent = `${item.candidate.id} · model-generated${typeof score === 'number' && Number.isFinite(score) ? ` · predicted overlap quality ${score.toFixed(3)}` : ''}. This score does not measure anatomy correctness.`;
+    $('warnings').textContent = item.candidate.warnings?.length ? `Review cues: ${item.candidate.warnings.join('; ')}` : 'Check the complete mask, including pixels outside the source box.';
+    $('notes').value = current().notes;
+    showBox(); renderMask(); layerSettings(); updateDecision();
+  }
+  function navigate(nextImage,nextCandidate) {
+    if (pointer) finishPointer();
+    accumulateTime(); if (reviewer) scheduleSave();
+    const changed = imageIndex !== nextImage; imageIndex = nextImage; candidateIndex = nextCandidate;
+    message(''); showCurrent(changed); startedAt = performance.now();
+  }
+  function setTool(nextTool) {
+    if (pointer) finishPointer();
+    tool = nextTool;
+    document.querySelectorAll('[data-tool]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.tool === tool)));
+    $('brush-ring').hidden = true; layerSettings();
+  }
+  function position(event) { const rect = $('mask-canvas').getBoundingClientRect(); return {x:(event.clientX - rect.left) * entry().image.width / rect.width,y:(event.clientY - rect.top) * entry().image.height / rect.height}; }
+  function brushRing(point) {
+    $('cursor-coordinates').textContent = `x ${Math.floor(point.x)} · y ${Math.floor(point.y)} · original pixels`;
+    const ring = $('brush-ring'), size = Number($('brush-size').value) * zoom;
+    ring.hidden = tool === 'pan' || !$('show-mask').checked || !reviewer;
+    ring.style.width = `${size}px`; ring.style.height = `${size}px`; ring.style.left = `${point.x * zoom}px`; ring.style.top = `${point.y * zoom}px`;
+  }
+  function paintDisk(x,y) {
+    x = Math.floor(x) + .5; y = Math.floor(y) + .5;
+    const image = entry().image, radius = Number($('brush-size').value) / 2, value = tool === 'paint' ? 1 : 0;
+    const minX = Math.max(0,Math.floor(x-radius)), maxX = Math.min(image.width-1,Math.ceil(x+radius));
+    const minY = Math.max(0,Math.floor(y-radius)), maxY = Math.min(image.height-1,Math.ceil(y+radius));
+    for (let yy = minY; yy <= maxY; yy++) for (let xx = minX; xx <= maxX; xx++) if ((xx+.5-x)**2 + (yy+.5-y)**2 <= radius**2) current().mask[yy * image.width + xx] = value;
+  }
+  function paintLine(a,b) {
+    const bounded = point => ({x:Math.max(0,Math.min(entry().image.width-.001,point.x)),y:Math.max(0,Math.min(entry().image.height-.001,point.y))});
+    a = bounded(a); b = bounded(b);
+    const steps = Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y) * 2));
+    for (let n=0;n<=steps;n++) paintDisk(a.x+(b.x-a.x)*n/steps,a.y+(b.y-a.y)*n/steps);
+    requestRender();
+  }
+  function finishPointer() {
+    if (!pointer) return;
+    const wasEditing = pointer.kind === 'edit', id = pointer.id; pointer = null;
+    if ($('mask-canvas').hasPointerCapture(id)) $('mask-canvas').releasePointerCapture(id);
+    if (wasEditing) { dirtyState(); updateDecision(); }
+    layerSettings();
+  }
+  function decide(decision) {
+    if (!reviewer || (!imageReady && ['accepted','edited'].includes(decision))) return;
+    if (pointer) finishPointer(); accumulateTime();
+    if (['rejected','needs_expert'].includes(decision) && !current().notes.trim()) { message('Add a short note explaining this decision first.'); $('notes').focus(); return; }
+    const equal = ReviewCore.sameMask(current().mask,entry().original), count = ReviewCore.pixelCount(current().mask);
+    if ((decision === 'accepted' && (!equal || !count)) || (decision === 'edited' && (equal || !count))) { message('The mask has changed. Check the available decision buttons.'); return; }
+    current().decision = decision; current().reviewedAt = new Date().toISOString();
+    message(''); dirtyState(); updateDecision();
+  }
+  function replaceReview(validated,options = {}) {
+    if (pointer) finishPointer(); clearTimeout(saveTimer);
+    const next = newStates();
+    validated.decisions.forEach((value,id) => next.set(id,{...value,mask:value.mask.slice(),history:[]}));
+    state = next; reviewer = {...validated.reviewer}; dirty = options.dirty ?? true; lastExportAt = options.lastExportAt ?? null;
+    $('restore-banner').hidden = true; savedReview = null;
+    configureReviewer(); setTool('pan'); showCurrent(false); saveLocal(); startedAt = performance.now();
+  }
+  bundle.images.forEach((image,i) => { const option = document.createElement('option'); option.value = String(i); option.textContent = `Case ${image.videoId} · frame ${image.frameNumber}`; $('image-select').append(option); });
+  $('reviewer-form').addEventListener('submit',event => {
+    event.preventDefault(); if (reviewer) return;
+    const rawName = $('reviewer-name').value, name = rawName.trim(), scope = $('reviewer-scope').value;
+    if (!name || /[\u0000-\u001f]/.test(rawName) || !['anatomy','technical'].includes(scope)) { message('Enter a name without control characters and choose a review scope.'); return; }
+    if (savedReview && !confirm('Start a fresh review and replace the saved browser copy? Restore the saved review first if you need to export it.')) return;
+    reviewer = {name,reviewScope:scope}; startedAt = performance.now(); lastActivity = Date.now();
+    $('restore-banner').hidden = true; savedReview = null;
+    message(''); configureReviewer(); dirtyState(); updateDecision();
+  });
+  $('new-review').addEventListener('click',() => {
+    if (!confirm('Clear every decision, mask edit, note, and saved browser copy from this review? Export JSON first if you want to keep them.')) return;
+    if (pointer) finishPointer(); clearTimeout(saveTimer);
+    try { localStorage.removeItem(storageKey); } catch (_) {}
+    state = newStates(); reviewer = null; dirty = false; lastExportAt = null; savedAt = null; savedReview = null;
+    $('reviewer-name').value = ''; $('reviewer-scope').value = ''; message(''); configureReviewer(); setTool('pan'); showCurrent(false); updateSaveLabels();
+  });
+  $('notes').addEventListener('input',() => { if (!reviewer) return; accumulateTime(); current().notes = $('notes').value; pending(); dirtyState(); updateDecision(); });
+  $('accept').addEventListener('click',() => decide('accepted')); $('approve-edit').addEventListener('click',() => decide('edited'));
+  $('reject').addEventListener('click',() => decide('rejected')); $('needs-expert').addEventListener('click',() => decide('needs_expert'));
+  $('undo').addEventListener('click',() => { if (!reviewer || !current().history.length) return; accumulateTime(); current().mask = current().history.pop(); pending(); dirtyState(); renderMask(); updateDecision(); });
+  $('reset').addEventListener('click',() => { if (!reviewer) return; accumulateTime(); remember(); current().mask = entry().original.slice(); pending(); dirtyState(); renderMask(); updateDecision(); });
+  document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click',() => setTool(button.dataset.tool)));
+  $('brush-size').addEventListener('input',() => { $('brush-value').textContent = `${$('brush-size').value} px`; $('brush-ring').hidden = true; });
+  $('zoom').addEventListener('input',() => updateZoom(Number($('zoom').value)/100)); $('fit').addEventListener('click',fit);
+  ['opacity','show-mask','show-box'].forEach(id => $(id).addEventListener('input',layerSettings));
+  $('image-select').addEventListener('change',event => navigate(Number(event.target.value),0));
+  $('previous-image').addEventListener('click',() => { if (imageIndex>0) navigate(imageIndex-1,0); });
+  $('next-image').addEventListener('click',() => { if (imageIndex<bundle.images.length-1) navigate(imageIndex+1,0); });
+  $('previous-candidate').addEventListener('click',() => { if (candidateIndex>0) navigate(imageIndex,candidateIndex-1); else if (imageIndex>0) navigate(imageIndex-1,bundle.images[imageIndex-1].candidates.length-1); });
+  $('next-candidate').addEventListener('click',() => { if (candidateIndex<entry().image.candidates.length-1) navigate(imageIndex,candidateIndex+1); else if (imageIndex<bundle.images.length-1) navigate(imageIndex+1,0); });
+  $('mask-canvas').addEventListener('pointerdown',event => {
+    if (event.button !== 0 || pointer) return;
+    const point = position(event);
+    if (tool !== 'pan' && (!reviewer || !imageReady || !$('show-mask').checked)) return;
+    event.preventDefault(); $('mask-canvas').setPointerCapture(event.pointerId);
+    if (tool === 'pan') { pointer = {kind:'pan',id:event.pointerId,x:event.clientX,y:event.clientY,left:$('viewport').scrollLeft,top:$('viewport').scrollTop}; $('mask-canvas').style.cursor = 'grabbing'; }
+    else { accumulateTime(); remember(); pending(); pointer = {kind:'edit',id:event.pointerId,last:point}; paintLine(point,point); }
+  });
+  $('mask-canvas').addEventListener('pointermove',event => {
+    const point = position(event); brushRing(point);
+    if (!pointer || pointer.id !== event.pointerId) return;
+    if (pointer.kind === 'pan') { $('viewport').scrollLeft = pointer.left - (event.clientX-pointer.x); $('viewport').scrollTop = pointer.top - (event.clientY-pointer.y); }
+    else { paintLine(pointer.last,point); pointer.last = point; }
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(name => $('mask-canvas').addEventListener(name,finishPointer));
+  $('mask-canvas').addEventListener('pointerleave',() => { $('brush-ring').hidden = true; });
+  $('export').addEventListener('click',() => {
+    try {
+      if (pointer) finishPointer(); accumulateTime();
+      const review = reviewObject(); ReviewCore.validateReview(review,index);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(review,null,2)+'\n'],{type:'application/json'}));
+      const anchor = document.createElement('a'); anchor.href = url; anchor.download = `holospex-review-${new Date().toISOString().replace(/[:.]/g,'-')}.json`; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url),30000);
+      lastExportAt = review.exportedAt; dirty = false; saveLocal(); message('JSON download requested. Keep the downloaded file to resume or share this review.');
+    } catch(error) { message(`Could not export: ${error.message}`); }
+  });
+  $('import').addEventListener('click',() => $('import-file').click());
+  $('import-file').addEventListener('change',async event => {
+    const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
+    try {
+      if (file.size > 100000000) throw new Error('This file is too large for the review viewer.');
+      const review = JSON.parse(await file.text()); const validated = ReviewCore.validateReview(review,index);
+      const decided = [...validated.decisions.values()].filter(item => item.decision !== 'pending').length;
+      if (!confirm(`Replace this session with ${validated.reviewer.name}’s ${validated.reviewer.reviewScope} review (${decided} recorded decisions)? The imported author is preserved. Export your current review first if you want to keep it.`)) return;
+      replaceReview(validated,{dirty:false,lastExportAt:review.exportedAt}); message(`Resumed ${validated.reviewer.name}’s review. Missing candidates remain Pending.`);
+    } catch(error) { message(`Import rejected; current review was kept. ${error.message}`); }
+  });
+  $('restore').addEventListener('click',() => {
+    if (!savedReview) return;
+    try { const copy = savedReview; replaceReview(ReviewCore.validateReview(copy.review,index),{dirty:Boolean(copy.dirty),lastExportAt:copy.lastExportAt || null}); message('Restored this browser’s saved review, preserving its author. Export JSON for a portable copy.'); }
+    catch(error) { message(`Saved review could not be restored: ${error.message}`); }
+  });
+  $('discard-saved').addEventListener('click',() => {
+    if (!confirm('Discard this browser’s saved review? Downloaded JSON files are unaffected.')) return;
+    try { localStorage.removeItem(storageKey); } catch (_) {}
+    savedReview = null; $('restore-banner').hidden = true;
+  });
+  ['pointerdown','pointermove','keydown'].forEach(name => document.addEventListener(name,() => { lastActivity = Date.now(); },{passive:true}));
+  document.addEventListener('visibilitychange',() => { if (pointer) finishPointer(); accumulateTime(); if (reviewer) saveLocal(); startedAt = performance.now(); });
+  window.addEventListener('beforeunload',event => { if (pointer) finishPointer(); if (reviewer) saveLocal(); if (dirty) { event.preventDefault(); event.returnValue = ''; } });
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      const value = JSON.parse(saved);
+      if (value.storageVersion !== 1) throw new Error('Unsupported local save version.');
+      ReviewCore.validateReview(value.review,index); savedReview = value;
+      $('restore-text').textContent = `A saved ${value.review.reviewer.reviewScope} review by ${value.review.reviewer.name} is available on this browser. Restore it to continue, or start a new named review.`;
+      $('restore-banner').hidden = false;
+    }
+  } catch(error) { autosaveAvailable = false; message('A browser save could not be read or validated. Your bundle is unchanged. Resume from an exported JSON file if available.'); }
+  configureReviewer(); showCurrent(true); requestAnimationFrame(fit); updateSaveLabels();
+})();
+</script>
+</body>
+</html>

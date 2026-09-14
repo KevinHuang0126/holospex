@@ -1,0 +1,60 @@
+{
+  "created_at": "2026-09-13T04:58:29.555294+00:00",
+  "project": "eastwest72hack26bos-501",
+  "purpose": "Audited data acquisition for subsequent experiments; none used in frozen Dice runs.",
+  "datasets": {
+    "endoscapes_bbox": {
+      "uri": "gs://eastwest72hack26bos-501-holospex-ml/datasets/endoscapes-bbox-train-expansion/62c3e97a7f55eac13ff8709152d7b42ad06d32a9454956cf9a8ce2e4d8e93abd/endoscapes-bbox-train-expansion.tar.gz",
+      "sha256": "62c3e97a7f55eac13ff8709152d7b42ad06d32a9454956cf9a8ce2e4d8e93abd",
+      "bytes": 95684828,
+      "generation": "1789275362829646",
+      "crc32c": "kmen5g==",
+      "source_page": "https://github.com/CAMMA-public/Endoscapes",
+      "annotation_type": "bounding_box",
+      "raw_image_count": 869,
+      "usable_image_count": 852,
+      "box_labeled_usable_images": 850,
+      "quarantined_blank_images": 17,
+      "new_training_cases": 90,
+      "box_annotations": 3951,
+      "pixel_masks_provided": false,
+      "integration_status": "Requires a separate box-supervised or reviewed pseudo-mask experiment; never train on rectangles as pixel truth."
+    },
+    "cholecseg8k_audit": {
+      "uri": "gs://eastwest72hack26bos-501-holospex-ml/datasets/cholecseg8k/v11/76612c6ea6b9952a0f7a9ffe68c026bac97dae74597b6d15362859a1441e147a/cholecseg8k-v11-audit.tar.gz",
+      "sha256": "76612c6ea6b9952a0f7a9ffe68c026bac97dae74597b6d15362859a1441e147a",
+      "bytes": 2020400,
+      "generation": "1789275456993248",
+      "crc32c": "RQc6LA=="
+    },
+    "cholecseg8k_raw": {
+      "uri": "gs://eastwest72hack26bos-501-holospex-ml/datasets/cholecseg8k/v11/aa0c6f3ded916f5938443571faffcbab408583623093a33e762f1c7b3595e551/cholecseg8k-v11.zip",
+      "sha256": "aa0c6f3ded916f5938443571faffcbab408583623093a33e762f1c7b3595e551",
+      "bytes": 3106240233,
+      "generation": "1789274973334728",
+      "crc32c": "e9+6Pw==",
+      "local_remote_crc32c_equal": true,
+      "source_page": "https://www.kaggle.com/datasets/newslab/cholecseg8k",
+      "annotation_type": "source_semantic_mask",
+      "image_mask_pairs": 8080,
+      "source_videos": 17,
+      "frames_with_confirmed_holospex_targets": 7331,
+      "duct_positive_frames": 248,
+      "confirmed_source_mapping": {
+        "22": "gallbladder",
+        "25": "cystic_duct",
+        "31": "tool",
+        "32": "tool"
+      },
+      "unavailable_classes": [
+        "cystic_artery",
+        "cystic_plate",
+        "hepatocystic_triangle_dissection"
+      ],
+      "integration_status": "Requires partial-supervision adapter: only confirmed positive source classes map; every other pixel is ignored. Exclude all-ignored frames; balance correlated cases.",
+      "case_overlap": "No overlap for these 17 videos listed in the official CAMMA crosswalk at commit 8347b9f4cb02ebe739747903e6eada272ee9d25e; no independent image-duplicate audit."
+    }
+  },
+  "format_version": 1,
+  "license": "CC BY-NC-SA 4.0; retain each original release license and attribution."
+}

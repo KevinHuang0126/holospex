@@ -1,6 +1,21 @@
-# ML run record — September 12, 2026
+# ML run record — September 13, 2026
 
-The current checkpoint is **`small-004-resolution/best.pt`**, selected at epoch 9
+The [four-hour autonomous search](AUTONOMOUS_TRAINING.md) is **complete**. The
+controller stopped at its 23:44:23 UTC deadline; all **15 owned Vertex jobs
+succeeded**, completing **900 full epochs**, with every run independently
+audited and no active jobs remaining. Run012, MoCo-initialized DeepLabV3–ResNet50
+with main-head Lovasz, leads at **52.0409% six-class foreground IoU** on the
+unchanged 75-frame native validation set, up **6.1692 percentage points** from
+the 45.8717% reviewed reference. It selected epoch 34/60 and reached **34.6151%
+pooled small-anatomy IoU** and **28.2247% equal-case small-anatomy IoU**. The
+**75% target was not reached**. Its three-seed foreground mean is **51.5111%**
+(range 50.8585–52.0409%). See the [final results](outputs/autonomous-20260913/reports/final/RESULTS.md),
+[seed comparison](outputs/autonomous-20260913/reports/replication-results.md),
+and [experiment log](EXPERIMENT_LOG.md). The local ML suite passes **312 tests**.
+The research leader has not been promoted to the demo, and this search did not
+evaluate the test split.
+
+The current selected demo checkpoint is **`small-004-resolution/best.pt`**, selected at epoch 9
 of a 12-epoch, 672 × 384 training run. On the same original-resolution validation
 labels, small-anatomy mean IoU improves **18.60% → 24.36%**, equal-case small-anatomy
 IoU improves **16.20% → 25.73%**, and six-class foreground IoU improves
@@ -8,12 +23,102 @@ IoU improves **16.20% → 25.73%**, and six-class foreground IoU improves
 individual frames regress. See [SMALL_ANATOMY.md](SMALL_ANATOMY.md) for the
 controlled comparison, precision/recall tradeoffs, commands, and exact artifacts.
 This update uses validation only; there is no new test result for this checkpoint.
+All five cloud experiments are complete. The selected demo checkpoint remains
+unchanged: the best pooled cloud result improves small-anatomy IoU to 26.36%,
+but lowers case-equal small IoU to 25.35% and artery recall from 34.27% to 24.63%.
+See [CLOUD_RESULTS.md](CLOUD_RESULTS.md) for every candidate and the decision.
+
+The separate [Dice iteration](DICE_ITERATION.md) is also complete: six fresh
+40-epoch A100 jobs compared balanced CE against CE + foreground generalized Dice
+at seeds 42, 43, and 44, retaining 672 × 384 input and the original split.
+All six jobs succeeded and their artifacts were checksum-verified. Mean small
+IoU fell **25.13% → 24.60%**, case-equal small IoU **22.42% → 21.49%**, and plate
+recall **24.12% → 15.63%**. Artery recall rose **21.06% → 22.88%**. This variant
+does not improve performance overall; the selected demo remains unchanged.
+See [DICE_RESULTS.md](DICE_RESULTS.md) for all seeds, per-class tradeoffs,
+independent verification and next steps.
+The Dice packaged source passed 135 tests; its final workspace passed 143 ML tests.
+Additional source data was acquired separately and did not enter these six runs.
+Acquisition is complete: [852 usable new Endoscapes TRAIN images with 3,951 boxes](DATA_EXPANSION.md)
+and [8,080 CholecSeg8k image/mask pairs](ADDITIONAL_MASK_DATA.md) are audited and
+copied to private GCP storage. The latter has only partial Holospex class coverage.
+
+The [teammate mask-review pilot](MASK_REVIEW.md) is now generated and packaged:
+**20 images from 20 new TRAIN cases, with 52 SAM 2.1 box-prompted proposals**
+(16 arteries, 16 ducts, 9 plates, 11 triangle-dissection regions). Vertex job
+`4112639277085491200` succeeded on one Spot A100; all 83 output artifacts and
+source/mask identities were checksum-verified. The portable HTML editor supports
+explicit named reviews, brush/erase corrections, JSON export/resume and strict
+Python import. The frozen reviewed-data training source passes **192 ML tests**;
+the review UI previously passed **12 core tests**. The [first returned anatomy review](REVIEW_PILOT_RESULTS.md) now
+contains all 52 decisions: 36 accepted unchanged, 13 edited and approved,
+2 needs-expert and 1 rejected. All 49 approved masks were validated and imported
+as separate partial masks. The lead confirmed both flagged edits were finished
+and approved ignoring overlapping pixels. The [derived training targets](PARTIAL_TRAINING.md)
+now retain 323,094 reviewed pixels and add 18 images: **361 train / 75 validation
+/ 74 test**, with original samples and holdouts unchanged. Native target hashes,
+actual loader resizing and ignored-pixel CE/Dice gradients pass verification.
+The [reviewed-data training comparison](REVIEWED_DATA_RESULTS.md) completed
+six fresh A100 jobs: three original-data controls at 42 epochs and
+three expanded-data candidates at 40 epochs, paired by seeds 42/43/44. This
+matches optimizer-update budgets within 0.22% at the unchanged 672 × 384 input
+and balanced-CE settings. All three pairs improve both small-anatomy measures:
+mean pooled IoU **24.40% → 27.23%** and equal-case IoU **22.59% → 24.65%**.
+Artery and duct show the clearest gains; plate has only +0.33 pooled IoU points
+and loses 1.10 equal-case points, with lower precision. This supports another
+bounded labeling batch with particular attention to plate boundaries. All 93
+artifacts were checksum-verified; the comparison independently recomputes
+metrics and binds actual training file hashes to the reviewed package. The
+final workspace passes **205 ML tests**. All jobs have finished, test was not
+evaluated, and the selected demo checkpoint remains unchanged.
+
+The [higher-resolution iteration](RESOLUTION_ITERATION.md) is complete. Two
+matched 40-epoch A100 runs tested 896 × 512 and 1120 × 640 against the existing
+672 × 384 cloud control. The 896 × 512 run regressed small-anatomy results. The
+1120 × 640 run improved pooled small IoU **26.36% → 27.20%** and artery recall
+**24.63% → 43.87%**, but equal-case small IoU fell **25.35% → 24.76%**, artery
+precision fell **30.39% → 17.59%**, and plate IoU fell **18.28% → 14.03%**.
+Its median local CPU adapter latency was 227.07 ms versus 121.89 ms for the
+control. Both jobs succeeded and all artifacts were verified; neither used the
+test split or unreviewed masks. The selected demo checkpoint remains unchanged;
+those resolution jobs have finished.
 
 The initial Endoscapes pipeline completed two three-epoch runs.
 Its earlier balanced-loss checkpoint reached **36.76% validation foreground
 macro-IoU** and **35.57% test foreground macro-IoU / 46.01% macro-Dice**.
 This is an early hackathon baseline; small-structure errors remain substantial.
 It does not provide reviewed lesson answers, CVS decisions, or clinical validation.
+
+## Cloud training and implemented experiment options
+
+All five Vertex jobs reached **JOB_STATE_SUCCEEDED** on September 13, 2026,
+using NVIDIA A100 GPUs. Each completed training and original-grid validation;
+all final artifacts were downloaded and checksum-verified. No training job in
+this batch remains active. See [CLOUD_EXPERIMENTS.md](CLOUD_EXPERIMENTS.md) for
+the frozen plan, [CLOUD_RESULTS.md](CLOUD_RESULTS.md) for comparisons, and
+[CLOUD_TRAINING.md](CLOUD_TRAINING.md) for reproduction and artifact retrieval.
+
+| Run | Vertex custom job ID | Submitted (September 13, UTC) |
+| --- | --- | --- |
+| 12-epoch matched control | `3017512501681061888` | 03:23:17 |
+| 40-epoch longer MobileNet control | `6848949884666511360` | 03:38:23 |
+| 40-epoch ResNet50 candidate | `7671982716568469504` | 03:38:24 |
+| 40-epoch augmentation candidate | `2909989060577591296` | 03:43:45 |
+| 40-epoch case-balanced candidate | `6893422930986795008` | 03:54:06 |
+
+The training package now supports DeepLabV3–ResNet50 in addition to the existing
+MobileNetV3 model, optional mild paired augmentation, and optional case-balanced
+sampling. Augmentation and replacement sampling apply only to training;
+class weights still count each unaugmented training mask once. Defaults remain
+MobileNetV3, no augmentation, and uniform sampling. Existing checkpoints and the
+segmentation output contract remain compatible. Each change is isolated in the
+[frozen five-run plan](CLOUD_EXPERIMENTS.md). None of the alternatives resolves
+the case-equal/artery-recall tradeoff enough to replace the local demo checkpoint.
+
+Cloud runs preserve coherent completed-epoch artifacts in private Cloud Storage
+and evaluate original-resolution validation labels. Exact resume is not
+implemented: optimizer, RNG, and sampler state are not saved. Interrupted
+attempts retain distinct identities. No cloud test-set results are claimed here.
 
 ## Data and preprocessing
 
@@ -26,8 +131,9 @@ It does not provide reviewed lesson answers, CVS decisions, or clinical validati
 - Seven model channels: background, gallbladder, cystic duct, cystic artery,
   cystic plate, hepatocystic triangle dissection, tool. Source PNG IDs are
   remapped explicitly; they are not the same as the channel order.
-- Images resize bilinearly to **448 × 256** for the initial runs and longer
-  control, or **672 × 384** for the current checkpoint; masks use nearest neighbor.
+- Images resize bilinearly to **448 × 256** for the earlier local controls,
+  **672 × 384** for the current checkpoint and original cloud batch, and the
+  completed resolution candidates used **896 × 512** and **1120 × 640**; masks use nearest neighbor.
   ImageNet normalization and frozen BatchNorm are shared by all runs.
 - Background, gallbladder, and tool account for **97.01% of scored training
   pixels** at the initial 448 × 256 resolution. The smaller structures need
@@ -111,6 +217,9 @@ uncalibrated, and filtering does not establish correctness or resolve these fail
 
 - **Implemented and exercised:** data acquisition/audit, preprocessing, model
   training, validation/test evaluation, comparison sheets, and frame JSON/mask export.
+- **Implemented experiment options:** ResNet50 checkpoint dispatch, mild paired
+  training augmentation, and case-balanced training sampling, covered by CPU
+  tests and completed CUDA runs. Their validation comparisons are recorded above.
 - **Video export exercised:** all **120 consecutive frames** of the public
   [eight-second excerpt](outputs/demo-video-v1/zhou-2024-video2-excerpt.mp4) have
   direct predictions at original 1280 × 720 dimensions. First PTS is zero;
@@ -125,8 +234,8 @@ uncalibrated, and filtering does not establish correctness or resolve these fail
   paired with the same prepared MP4. All 120 updated frames pass both contract
   validators and preserve the earlier export's exact presentation timestamps.
   The earlier export remains available.
-- **Not implemented:** live inference API, temporal tracking/smoothing, training
-  augmentation, and reviewed clinical lesson content. Camera AR is a separate path.
+- **Not implemented:** live inference API, temporal tracking/smoothing, exact
+  training resume, and reviewed clinical lesson content. Camera AR is a separate path.
 - **Next handoff:** use [DEMO_MEDIA.md](DEMO_MEDIA.md) for the exact source,
   preparation command, media ID and attribution. Connect this clip/result array
   to the frontend and test playback alignment. The website still uses synthetic
@@ -134,19 +243,31 @@ uncalibrated, and filtering does not establish correctness or resolve these fail
 
 ## Checks and next experiment
 
-All **91 ML tests pass**. They cover label conversion/ignore policy, leakage,
+All **169 ML tests pass**. They cover label conversion/ignore policy, leakage,
 loss/metrics, safe checkpoint provenance, original-frame geometry, invalid
 contours, real variable-PTS decoding, original-grid scoring, and annotation-selected
-comparison crops. The original baseline completed validation and test evaluation;
-the new candidates completed validation only and the selected one has a real clip export.
+comparison crops, plus architecture compatibility, paired augmentation,
+case-balanced sampling, and cloud artifact handling. The original baseline
+completed validation and test evaluation; the earlier local improvement candidates
+completed validation only, and the selected one has a real clip export.
 
-For the next training experiment, keep test data out of tuning: consider
-case-balanced sampling or conservative paired augmentation, one change at a
-time with the current model as control. Do not choose
-settings by making the public demo overlays look more convincing. This test
-split has now been inspected; further comparisons on it are not a fresh blind test.
+The [frozen cloud experiment set](CLOUD_EXPERIMENTS.md) is complete: longer
+training, augmentation, case balancing, and model capacity were evaluated
+independently. The documented Dice and resolution comparisons are also complete.
+Further loss or data changes need a new documented experiment; none is running
+now. Keep test data and the public demo clip
+out of tuning. This test split has already been inspected; further comparisons
+on it are not a fresh blind test.
 
 On this Mac, importing both OpenCV and PyAV emits duplicate AVFoundation class
 warnings from their bundled libraries. Both full clip exports completed, with
 no observed crash. The pinned environment is an offline prototype; isolate
 decoding in a fresh process before building a persistent live service.
+
+The next [offline anatomy-review ZIP](MASK_REVIEW.md) is ready: **50 images from
+25 new TRAIN cases, 141 SAM proposals**, excluding every first-pilot case and
+all original Seg50/held-out cases. Vertex job `5340186834892750848` completed
+proposal generation. The package includes START-HERE.txt and the same editor,
+with zero review decisions. No new proposals enter training before returned
+reviews are validated. The updated tooling passes 211 ML tests and 12 editor
+core tests. The original review and selected demo checkpoint are preserved.

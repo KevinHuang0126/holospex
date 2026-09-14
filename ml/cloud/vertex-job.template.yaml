@@ -1,0 +1,46 @@
+# CustomJobSpec for `gcloud ai custom-jobs create --config=...`.
+# Replace placeholders using a YAML/JSON serializer; embed vertex_bootstrap.py
+# as the single __BOOTSTRAP_PYTHON__ argument. Never insert credentials here.
+# Registry manifest/config verified on 2026-09-12; see ignored runtime evidence.
+workerPoolSpecs:
+  - machineSpec:
+      machineType: a2-highgpu-1g
+      acceleratorType: NVIDIA_TESLA_A100
+      acceleratorCount: 1
+    replicaCount: 1
+    diskSpec:
+      bootDiskType: pd-ssd
+      bootDiskSizeGb: 100
+    containerSpec:
+      imageUri: docker.io/pytorch/pytorch@sha256:dab81780fd94483b67b4b5679cc0024939b08e48540d39476d284cb29002ed69
+      command: [python, -u, -c]
+      args: [__BOOTSTRAP_PYTHON__]
+      env:
+        - name: HOLOSPEX_PROJECT
+          value: __PROJECT_ID__
+        - name: HOLOSPEX_SOURCE_URI
+          value: __SOURCE_URI__
+        - name: HOLOSPEX_SOURCE_SHA256
+          value: __SOURCE_SHA256__
+        - name: HOLOSPEX_DATA_URI
+          value: __DATA_URI__
+        - name: HOLOSPEX_DATA_SHA256
+          value: __DATA_SHA256__
+        - name: HOLOSPEX_OUTPUT_URI
+          value: __OUTPUT_URI__
+        - name: HOLOSPEX_RUN_NAME
+          value: __RUN_NAME__
+        - name: HOLOSPEX_EPOCHS
+          value: "12"
+        - name: HOLOSPEX_WIDTH
+          value: "672"
+        - name: HOLOSPEX_HEIGHT
+          value: "384"
+# The first job uses same-project default Custom Code Service Agent access.
+# An optional explicit serviceAccount needs caller actAs and bucket permissions.
+scheduling:
+  strategy: SPOT
+  timeout: 14400s
+  disableRetries: true
+# timeout bounds running time, not a SPOT job's pending queue wait. Check and
+# cancel a job that cannot obtain capacity; maxWaitDuration is for FLEX_START.

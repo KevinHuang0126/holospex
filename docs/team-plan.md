@@ -63,9 +63,27 @@ No inference API, account system, cloud database, glasses SDK, or live-patient w
 
 ## Decisions the lead still needs
 
-- **ML progress:** the local M4 GPU runs the Endoscapes baseline. Data acquisition,
-  model training and offline exports are documented in [the ML runbook](../ml/TRAINING.md).
-  Cloud compute is optional; retain per-class evidence before choosing a larger run.
+- **ML progress:** the Endoscapes pipeline now runs on Vertex AI A100 GPUs as well
+  as the local M4. Follow the [cloud experiment plan](../ml/CLOUD_EXPERIMENTS.md),
+  [verified results](../ml/CLOUD_RESULTS.md), and [cloud runbook](../ml/CLOUD_TRAINING.md).
+  The [three-seed Dice comparison](../ml/DICE_RESULTS.md) is complete; retain the
+  existing demo checkpoint. The [higher-resolution comparison](../ml/RESOLUTION_ITERATION.md)
+  is also complete: 896 × 512 regressed, while 1120 × 640 improved pooled IoU
+  and artery recall but lost artery precision, plate IoU, equal-case IoU, and
+  inference speed. It remains a review candidate rather than the demo default.
+  [Additional datasets](../ml/DATA_CATALOG.json) are
+  acquired and stored in private GCP, with box/partial-mask limits documented.
+  An anatomy-capable teammate can now use the [20-image mask-review handoff](../ml/MASK_REVIEW.md):
+  52 generated proposals, an offline editor, and one returned JSON review file.
+  The [completed review and derived targets](../ml/PARTIAL_TRAINING.md) now add
+  18 partial training images with conflicting/unknown pixels ignored. Segmentation
+  review stays separate from lesson-answer review. The [six-run training
+  comparison](../ml/REVIEWED_DATA_RESULTS.md) now improves small pooled IoU in
+  all three pairs (mean 24.40% → 27.23%) and equal-case IoU (22.59% → 24.65%).
+  Another bounded labeling batch is supported; plate precision remains weak.
+  All GPU jobs have finished and the existing demo remains selected.
+  Select demo checkpoints from per-class validation evidence; a larger model or
+  a submitted cloud job is not itself evidence of better predictions.
 - **Camera:** the actual device/browser, physical model, and marker/registration library; define model coordinates with Person 2.
 - **Content:** reviewer availability, selected cases, asset license/permission record, and review criteria for uncertain views.
 - **Product:** whether future “live practice” means simulation or actual patient operations. Current implementation assumes simulation/education until clarified.
