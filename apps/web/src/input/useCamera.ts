@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Input adapter only: obtaining camera pixels does not locate anatomy.
- * The marker tracker consumes this stream and produces its own poses;
- * surgical-video segmentation must not be applied to this stream by default.
+ * Marker tracking and live surgical identification consume streams separately.
+ * A selected USB capture device can supply the surgical feed.
  */
 export function useCamera() {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -22,7 +22,7 @@ export function useCamera() {
     setInterrupted(false);
   }, []);
 
-  const start = useCallback(async (deviceId?: string) => {
+  const start = useCallback(async (deviceId?: string, constraints: MediaTrackConstraints = {}) => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setError("Camera access needs HTTPS or localhost and a supported browser.");
       return;
@@ -32,7 +32,7 @@ export function useCamera() {
     setStarting(true);
     try {
       const next = await navigator.mediaDevices.getUserMedia({
-        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: { ideal: "environment" } },
+        video: { ...constraints, ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: { ideal: "environment" } }) },
         audio: false,
       });
       // A permission prompt may resolve after the user leaves this mode.

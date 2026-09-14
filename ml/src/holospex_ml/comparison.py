@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 from PIL import Image, ImageColor, ImageDraw, ImageFont

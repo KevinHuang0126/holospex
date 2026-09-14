@@ -7,7 +7,7 @@ import { createMarkerTestRegistration } from "./markerSetup";
 
 // Authored synthetic geometry: an exposed, enlarged biliary teaching view.
 // Scene z is height ABOVE the table; the POSIT model axis has the opposite sign.
-export const BODY_Y = 210;
+const BODY_Y = 210;
 export const surgicalLandmarks: { id: AnatomyId; position: [number, number, number] }[] = [
   { id: "gallbladder", position: [-25, BODY_Y + 4, 61] },
   { id: "cystic_duct", position: [-4, BODY_Y + 21, 56] },

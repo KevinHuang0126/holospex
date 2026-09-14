@@ -3,7 +3,6 @@ import type { ModelPose } from "./modelRegistration";
 import type { HudAnchor } from "../overlays/drawHud";
 import { createSurgicalScene, disposeSurgicalScene, surgicalLandmarks } from "./surgicalScene";
 import { sceneMatrices } from "./cameraProjection";
-export { sceneMatrices } from "./cameraProjection";
 
 /** One GPU canvas is copied into the same recorded HUD canvas as the camera frame. */
 export class SurgicalRenderer {

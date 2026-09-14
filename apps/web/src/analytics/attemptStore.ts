@@ -5,7 +5,7 @@ const storageKey = "holospex.demo.attempts.v1";
 /** Browser-local demo persistence. Add a consented backend here if needed later.
  * No camera pixels, names, patient details, or video are stored by this module.
  */
-export function readAttempts(): LearnerAttempt[] {
+function readAttempts(): LearnerAttempt[] {
   const raw = localStorage.getItem(storageKey);
   if (!raw) return [];
   const values: unknown = JSON.parse(raw);

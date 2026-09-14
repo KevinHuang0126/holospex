@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Records the composed canvas, including provenance and warnings; never raw hidden anatomy. */
-export function HudRecorder({ canvas, name }: { canvas: HTMLCanvasElement | null; name: "video" | "model" }) {
+export function HudRecorder({ canvas, name }: { canvas: HTMLCanvasElement | null; name: "video" | "model" | "live" | "stream" }) {
   const active = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const [recording, setRecording] = useState(false);

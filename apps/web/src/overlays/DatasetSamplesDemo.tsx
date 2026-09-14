@@ -4,6 +4,7 @@ import { DatasetSampleHud, type DatasetSelection } from "./DatasetSampleHud";
 import { datasetCredit, importDatasetSamples, type DatasetImport } from "./datasetSamples";
 import { datasetOverlayState, type DatasetView } from "./datasetRaster";
 import { loadLocalDatasetSamples } from "./localSampleInput";
+import { trainingReferencesOnly } from "./trainingReferences";
 import type { HudMode } from "./hudControls";
 import type { DisplayedFrame } from "./selectFrame";
 import "../camera/deviceSetup.css";
@@ -30,7 +31,8 @@ export function DatasetSamplesDemo({ autoLoadLocal = false }: { autoLoadLocal?: 
     try {
       const imported = await read(controller.signal);
       if (request !== generation.current) return;
-      setPack(imported); setSelected(imported.samples[0]?.id ?? "");
+      const training = trainingReferencesOnly(imported);
+      setPack(training); setSelected(training.samples[0]?.id ?? "");
     } catch (cause) {
       if (request === generation.current) setError(cause instanceof Error ? cause.message : "Unable to import samples.");
     } finally { if (request === generation.current) setLoading(false); }
@@ -52,8 +54,8 @@ export function DatasetSamplesDemo({ autoLoadLocal = false }: { autoLoadLocal?: 
   const caseIndex = pack.samples.findIndex(item => item.id === selected);
   const overlaysShown = !!frame && datasetOverlayState(visible, mode, view).show && (opacity > 0 || showBoundaries || showLabels);
   return <section className="device-setup" aria-labelledby="samples-title">
-    <div className="sample-heading"><div><p className="eyebrow">AR / HUD · React test page</p><h2 id="samples-title">Test anatomy overlays</h2></div>
-      {autoLoadLocal && <button disabled={loading} onClick={() => void loadPack(loadLocalDatasetSamples)}>Reload local samples</button>}
+    <div className="sample-heading"><div><p className="eyebrow">AR / HUD · Training data</p><h2 id="samples-title">Explore training annotations</h2></div>
+      {autoLoadLocal && <button disabled={loading} onClick={() => void loadPack(loadLocalDatasetSamples)}>Reload training images</button>}
     </div>
     <p className="sample-intro">Inspect the supplied masks on the original images. Adjust the fill, boundaries and labels, or hide all overlays to compare alignment. Identify and Assess hide every anatomical layer.</p>
     <details className="sample-import" open={!autoLoadLocal || !!error}><summary>Choose a different sample folder</summary>
@@ -61,7 +63,7 @@ export function DatasetSamplesDemo({ autoLoadLocal = false }: { autoLoadLocal?: 
       <label className="setup-field">Open sample folder<input type="file" multiple ref={node => { node?.setAttribute("webkitdirectory", ""); }} onChange={event => { load(event.target.files); event.target.value = ""; }} /></label>
       <label className="setup-field">Or select the sample files together<input type="file" multiple onChange={event => { load(event.target.files); event.target.value = ""; }} /></label>
     </div>
-    <p className="fine-print">Select apps/web/tests/samples_tst. Files stay in this browser; original files are unchanged. Images and masks are paired using the hashes supplied with their labels.</p>
+    <p className="fine-print">Select the prepared training reference folder. Images and masks are paired by their supplied hashes. Only training-split annotations are accepted; files stay in this browser.</p>
     </details>
     {loading && <p role="status" className="notice">Checking the sample pack…</p>}
     {error && <p role="alert" className="error">{error}</p>}

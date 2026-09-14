@@ -29,6 +29,12 @@ const placement = await bundle({
   outfile: "placement.mjs", logLevel: "warning",
 });
 if (placement.outputFiles.length !== 1) throw new Error("Expected one self-contained placement function.");
+const identification = await bundle({
+  entryPoints: [join(root, "api", "identify.ts")], bundle: true, write: false,
+  platform: "node", format: "esm", target: "node22", sourcemap: false,
+  outfile: "identify.mjs", logLevel: "warning",
+});
+if (identification.outputFiles.length !== 1) throw new Error("Expected one self-contained identification function.");
 
 const staging = join(root, "runs", "holospex-mannequin-phone");
 await mkdir(staging, { recursive: true });
@@ -52,6 +58,7 @@ for (const name of files) {
 }
 await mkdir(apiDirectory, { recursive: true });
 await writeFile(join(apiDirectory, "placement.mjs"), placement.outputFiles[0].contents);
+await writeFile(join(apiDirectory, "identify.mjs"), identification.outputFiles[0].contents);
 await writeFile(join(stagingRoot, "package.json"), JSON.stringify({
   name: "holospex-phone-demo", private: true, type: "module", engines: { node: "22.x" },
 }, null, 2) + "\n");
@@ -60,9 +67,9 @@ await writeFile(join(stagingRoot, ".vercelignore"), "/*\n!public\n!api\n!package
 await writeFile(join(stagingRoot, "vercel.json"), JSON.stringify({
   $schema: "https://openapi.vercel.sh/vercel.json",
   framework: null, buildCommand: "", installCommand: "", outputDirectory: "public",
-  functions: { "api/placement.mjs": { maxDuration: 60 } },
+  functions: { "api/placement.mjs": { maxDuration: 60 }, "api/identify.mjs": { maxDuration: 15 } },
   redirects: [{ source: "/", destination: "/mannequin", permanent: false }],
   rewrites: ["/mannequin", "/samples", "/prototype"].map(source => ({ source, destination: "/index.html" })),
 }, null, 2) + "\n");
-console.log(`Prepared ${files.length} public files and api/placement.mjs in ${stagingRoot}`);
+console.log(`Prepared ${files.length} public files and 2 API functions (placement.mjs, identify.mjs) in ${stagingRoot}`);
 console.log(files.join("\n"));

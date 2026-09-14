@@ -1,5 +1,7 @@
 import Ajv from "ajv";
-import { anatomy, type AnatomyId, type FrameResult } from "@holospex/contracts";
+import type { AnatomyId, FrameResult } from "@holospex/contracts";
+// Keep this shared browser/dev-server importer independent of the contract runtime.
+import anatomy from "../../../../contracts/anatomy.json";
 import frameSchema from "../../../../contracts/schemas/frame-result.schema.json";
 import type { DisplayedFrame } from "./selectFrame";
 

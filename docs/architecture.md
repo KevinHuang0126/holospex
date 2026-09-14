@@ -21,7 +21,27 @@ flowchart LR
     S --> E[Learner attempts and export]
 ```
 
-The recorded-video path uses precomputed results. The browser should not depend on a GPU, an inference server, or training completing to start a lesson. An interactive inference service can be added behind the same result contract if the demo later needs it.
+The recorded-lesson path uses precomputed results. The browser can start a
+lesson without a GPU, an inference server, or completed model training.
+
+The [identification client](live-feed.md) accepts a camera/USB capture stream,
+an uploaded video or a direct HTTPS video/HLS link and uses the built-in
+`/api/identify` bridge to the trained Python checkpoint runner. It
+displays each identification with its captured image, bounds capture age and
+clears expired results. The runner reuses Person 1's segmentation adapter;
+weights and runtime hosting are supplied separately. Live identification has
+no assessment controls, and marker registration stays independent.
+Uploaded and linked video playback are separate from the lesson's precomputed
+result path. They send sampled captured frames to the model and invalidate
+pending results on seek, source replacement or playback transitions. Capture dimensions
+describe the resized image actually sent, preserving aspect ratio within
+1280 x 720. Predictions and captured pixels share that coordinate system.
+Stream links load directly in the browser with anonymous cross-origin access;
+the host must permit media requests, including every HLS resource. HLS.js 1.7.3
+loads on demand, with native HLS fallback where supported. The URL remains in
+browser state and is excluded from model requests, application logs and saved
+recordings. The model bridge receives the same sampled JPEG/frame contract;
+it does not fetch source URLs or convert RTSP or provider watch pages.
 
 The two imaging paths remain independent:
 

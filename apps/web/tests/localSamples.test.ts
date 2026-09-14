@@ -32,7 +32,8 @@ test("automatic import refuses a manifest that redirects sample reads outside th
   let requests = 0;
   t.mock.method(globalThis, "fetch", async () => {
     requests += 1;
-    return Response.json({ files: [{ name: "image.jpg", url: "https://example.com/image.jpg" }] });
+    return Response.json({ source: "training_reference", split: "train",
+      files: [{ name: "image.jpg", url: "https://example.com/image.jpg" }] });
   });
   await assert.rejects(loadLocalDatasetSamples(new AbortController().signal), /manifest is invalid/);
   assert.equal(requests, 1);

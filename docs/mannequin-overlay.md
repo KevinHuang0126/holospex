@@ -2,9 +2,14 @@
 
 Open `/mannequin` on the running React app. With `npm run dev:samples`, the
 address is http://127.0.0.1:5174/mannequin. The same setup is also available in
-**AR / HUD demo → Physical model** in the full prototype.
+**AR / HUD demo → Training image AR** in the full prototype.
 
-The default **Labeled image** uses the original surgical JPEG and its matching
+The default is **Camera identification**. See [camera, video and stream setup](live-feed.md)
+for preview and the built-in trained-model connection. **Upload video** opens a
+local clip; **Stream link** connects direct HTTPS video or HLS media. Select **Training image AR**
+to use the camera/marker setup documented below.
+
+Within that view, **Labeled image** uses a training surgical JPEG and its matching
 dataset mask. **Camera screen** needs no marker and stays fixed on screen;
 **Table marker** places the same image on a flat surface beyond a marker.
 See [the image overlay guide](camera-image-overlay.md) for sample loading,
@@ -14,13 +19,14 @@ image views, provenance and frontend integration.
 
 ### Open it on a phone
 
-The deployed test site is **https://holospex-mannequin-phone.vercel.app/mannequin**.
-It is a separate static Vercel project, `holospex-mannequin-phone`.
+The deployed test site is **https://holospex.vercel.app/mannequin**.
+Its Vercel project remains `holospex-mannequin-phone`. The production domain
+`holospex.vercel.app` is attached to that project and follows future production deployments.
 
 The phone needs an HTTPS URL. `localhost` and `127.0.0.1` on a phone refer to
 the phone itself, so the laptop's development URL will not work there.
 
-Deploy the prepared static app to a separate Vercel test project. From the
+Deploy the prepared app and API functions to the linked Vercel project. From the
 repository root:
 
 ```powershell
@@ -32,21 +38,31 @@ vercel deploy --cwd runs/holospex-mannequin-phone --yes --prod
 
 Open the resulting HTTPS URL with `/mannequin` on the end directly in
 Safari on iPhone or Chrome on Android, tap **Start camera**, and allow access.
-The rear camera is preferred by default. Before starting, run
-`npm run prepare:camera-samples` on the laptop, transfer one `.holospex.json`
-file from `runs/camera-samples/` to the phone's Files app, and choose it under
-**Open camera sample or sample files**. Leave **Labeled image** and
-**Camera screen** selected for a test without a marker. The image appears in
-preview before starting the camera. Once deployed and the sample transferred,
-the laptop can be turned off.
+The rear camera is preferred by default. Live preview needs no reference file;
+live anatomy requires the configured trained checkpoint runner.
+For a remote source, choose **Stream link** and **Connect stream**; its host
+must permit cross-origin playback and frame capture. See
+[stream formats and controls](live-feed.md#identify-a-stream-link). Phone and
+stream-device compatibility still need testing with the intended source.
+
+For reference-image AR, [prepare a train-split batch](live-feed.md#training-image-references),
+then run `npm run prepare:camera-samples` on the laptop. Transfer one generated
+`.holospex.json` from `runs/camera-samples/` to the phone's Files app. Choose
+**Training image AR**, open the file under **Open camera sample or sample
+files**, and press **Start camera**. **Labeled image** and **Camera screen**
+provide a test without a marker. A preview appears before camera capture.
+Once deployed and the reference transferred, this local image mode does not
+need the laptop. Training references and a live inference service are separate inputs.
 If the project has Vercel deployment protection enabled, sign in on the phone
 as well. Rebuild, prepare and deploy again when changing the app.
 
-The prepared upload contains the built JavaScript/CSS, page, and four approved
-synthetic fixture files. It excludes the repository, local sample data and
-portable camera samples. Selected files, camera frames and model configurations
-are processed in the phone's browser. The local `samples_tst` endpoint is not
-part of the deployed build.
+The prepared upload contains built browser assets, approved synthetic fixtures
+and the mannequin cutout, plus separate placement and identification APIs. It excludes local
+training data, weights and portable camera samples. Reference images, marker
+processing and model configurations stay in the browser. Live camera uploads
+occur after **Start camera** when the model is ready and overlays are visible;
+the placement API never receives camera frames. The private `/__local-training/` development endpoint is absent from
+the deployed build, and there is no automatic test-sample fallback.
 `npm run preview:phone` is available for checking the build locally on port 4174.
 
 References: [Vercel CLI deployment](https://vercel.com/docs/cli/deploy),
@@ -54,7 +70,8 @@ References: [Vercel CLI deployment](https://vercel.com/docs/cli/deploy),
 
 ### Run the tracking check
 
-1. Load a sample under **Labeled image** and select **Table marker**. Download
+1. Choose **Training image AR**, load a training reference under **Labeled image**,
+   and select **Table marker**. Download
    the printable marker SVG. Print at
    100% scale and measure the black square: the default is 80 mm. The complete
    SVG is 100 mm including its white border. Keep that border intact.

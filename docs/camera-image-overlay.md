@@ -1,6 +1,8 @@
 # Labeled surgical image over the camera
 
-`/mannequin` defaults to **Labeled image**. The original surgical JPEG provides
+`/mannequin` now defaults to **Live feed**; see the [live-feed guide](live-feed.md)
+for camera/USB capture and opt-in inference. Select **Training image AR**, then
+**Labeled image**, for this reference-image path. The original surgical JPEG provides
 tissue detail, and its matching index mask supplies colored boundaries and
 label positions. This is virtual placement of an existing image, not a 3D
 anatomical reconstruction. The source remains **Supplied dataset annotation**;
@@ -9,25 +11,28 @@ it is not relabeled as synthetic anatomy, reviewed feedback or ML inference.
 ## Load a sample
 
 On the laptop, run `npm run dev:samples` and open
-http://127.0.0.1:5174/mannequin. The usable cases in
-`apps/web/tests/samples_tst` load automatically. **Reload local samples** rereads
-the folder. Manual import accepts the folder or a matching label record,
-original JPEG and index PNG together; pairing uses hashes, not filenames.
+http://127.0.0.1:5174/mannequin and select **Training image AR**. Prepared
+training references in ignored `runs/training-reference/` load automatically.
+**Reload training images** rereads the folder. Prepare it from the train split
+with `scripts/prepare-training-reference.py`; see
+[manifest and batch setup](live-feed.md#training-image-references).
+`HOLOSPEX_TRAINING_REFERENCE_DIR` can select another prepared server folder.
+Manual import accepts that folder or a matching label record, original JPEG
+and index PNG together; pairing uses hashes, not filenames. Automatic, manual
+and portable imports exclude validation/test splits. Missing training data
+does not trigger a fallback to `samples_tst`.
 
-For the [phone demo](https://holospex-mannequin-phone.vercel.app/mannequin), run:
+For the [phone demo](https://holospex.vercel.app/mannequin), run:
 
 ```sh
 npm run prepare:camera-samples
 ```
 
-This validates the local pack and writes portable files, currently:
-
-- `runs/camera-samples/case-116_35325.holospex.json`
-- `runs/camera-samples/case-119_77250.holospex.json`
-
-Case `4_36700` is incomplete and is withheld. Transfer one generated file to
-the phone's Files app, then select it under **Open camera sample or sample
-files**. Each file contains the original image, exact mask and unchanged label
+This validates the prepared training folder and writes
+`runs/camera-samples/case-<id>.holospex.json` for each usable reference. It
+requires local training data; no training references are bundled. Transfer
+one generated file to the phone's Files app, choose **Training image AR**, then
+select it under **Open camera sample or sample files**. Each file contains the original image, exact mask and unchanged label
 record. Import checks hashes, class mapping, dimensions and provenance;
 decoding also checks mask values and counts. Invalid or incomplete samples
 do not leave the previous image visible.
@@ -37,7 +42,7 @@ filters, without passing through browser image decoding or canvas readback.
 This preserves class IDs when browser color handling or privacy protections
 would alter the pixel values. The decoder supports the supplied non-interlaced,
 8-bit grayscale PNG format and requires browser `DecompressionStream` support.
-Existing portable sample files work unchanged.
+The portable format is unchanged; only train-split references are accepted.
 
 Portable files are limited to 20 MB and read locally. `runs/` is ignored by
 Git and excluded from the prepared deployment. Dataset assets are not hosted
@@ -57,7 +62,7 @@ the phone moves and requires no marker. A preview is available before starting
 the camera.
 
 Choose **Scene → Mannequin + sample** to place the same surgical image on the
-supplied `mannequin.png`. It starts with a smaller illustrative abdominal
+prepared `mannequin-cutout.png`. It starts with a smaller illustrative abdominal
 placement. Select **Fit anatomy with AI** to request an organ-aware position
 and scale, then adjust **Left / right**, **Up / down**, and **Sample width** as
 needed. **Reset placement** restores the manual starting position.

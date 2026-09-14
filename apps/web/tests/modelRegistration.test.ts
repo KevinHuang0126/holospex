@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import aruco from "js-aruco2";
-import { parseModelRegistration, projectPoint, registerModel } from "../src/camera/modelRegistration";
+import { estimateModelPose, parseModelRegistration, projectModelAnchors, projectPoint } from "../src/camera/modelRegistration";
 import { createMarkerTestRegistration, printableMarkerSvg } from "../src/camera/markerSetup";
 const { AR } = aruco;
 
@@ -19,13 +19,18 @@ test("invalid model registration is rejected before tracking", () => {
 });
 test("a synthetic marker yields a measured pose, follows translation, and rejects wrong camera aspect", () => {
   const corners = [{ x: 240, y: 160 }, { x: 400, y: 160 }, { x: 400, y: 320 }, { x: 240, y: 320 }];
-  const anchors = registerModel(config, corners, 640, 480);
-  assert.ok(anchors && anchors.length === 1);
+  const pose = estimateModelPose(config, corners, 640, 480);
+  assert.ok(pose);
+  const anchors = projectModelAnchors(config, pose);
+  assert.equal(anchors.length, 1);
   assert.ok(Math.abs(anchors[0].x - 320) < 0.1 && Math.abs(anchors[0].y - 240) < 0.1);
-  const translated = registerModel(config, corners.map(p => ({ x: p.x + 20, y: p.y + 10 })), 640, 480);
-  assert.ok(translated && Math.abs(translated[0].x - 340) < 0.5 && Math.abs(translated[0].y - 250) < 0.5);
-  assert.equal(registerModel(config, corners, 640, 360), null);
-  assert.equal(registerModel(config, [], 640, 480), null);
+  const translatedPose = estimateModelPose(config, corners.map(p => ({ x: p.x + 20, y: p.y + 10 })), 640, 480);
+  assert.ok(translatedPose);
+  const translated = projectModelAnchors(config, translatedPose);
+  assert.equal(translated.length, 1);
+  assert.ok(Math.abs(translated[0].x - 340) < 0.5 && Math.abs(translated[0].y - 250) < 0.5);
+  assert.equal(estimateModelPose(config, corners, 640, 360), null);
+  assert.equal(estimateModelPose(config, [], 640, 480), null);
 });
 test("the actual marker detector recognizes the configured dictionary and rejects a blank frame", () => {
   const dictionary = new AR.Dictionary(config.dictionary);
@@ -65,8 +70,10 @@ test("printable marker preserves its physical black-square size and decodes thro
     const detector = new AR.Detector({ dictionaryName: fixture.dictionary, maxHammingDistance: 0 });
     const markers = detector.detect({ width, height, data } as ImageData);
     assert.equal(markers.length, 1); assert.equal(markers[0].id, markerId);
-    const points = registerModel(fixture, markers[0].corners, width, height);
-    assert.ok(points && points.length >= 1);
+    const pose = estimateModelPose(fixture, markers[0].corners, width, height);
+    assert.ok(pose);
+    const points = projectModelAnchors(fixture, pose);
+    assert.ok(points.length >= 1);
     assert.ok(Math.hypot(points[0].x - 200, points[0].y - 200) < 1);
   }
   assert.match(printableMarkerSvg(createMarkerTestRegistration(1280, 720, 64)), /width="80mm" height="80mm"/);
@@ -87,11 +94,13 @@ test("off-center 3D mannequin locations follow small viewpoint changes and detec
     const translation = [15, -20, 550];
     const corners = square.map(point => { const [x, y] = projectPoint(point, rotation, translation, fixture.calibration)!; return { x, y }; });
     for (const scale of [1, 0.5]) {
-      const points = registerModel(fixture, corners.map(p => ({ x: p.x * scale, y: p.y * scale })), 1280 * scale, 720 * scale);
-      assert.equal(points?.length, 2);
+      const pose = estimateModelPose(fixture, corners.map(p => ({ x: p.x * scale, y: p.y * scale })), 1280 * scale, 720 * scale);
+      assert.ok(pose);
+      const points = projectModelAnchors(fixture, pose);
+      assert.equal(points.length, 2);
       fixture.anchors.forEach((anchor, index) => {
         const expected = projectPoint(anchor.positionMm, rotation, translation, fixture.calibration)!;
-        const point = points![index];
+        const point = points[index];
         assert.ok(Math.hypot(point.x / scale - expected[0], point.y / scale - expected[1]) < 2, `Viewpoint ${angle}, scale ${scale}: anchor drift`);
       });
     }

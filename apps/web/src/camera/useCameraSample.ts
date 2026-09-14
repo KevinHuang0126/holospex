@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { importDatasetSamples, type DatasetImport } from "../overlays/datasetSamples";
-import { loadLocalDatasetSamples } from "../overlays/localSampleInput";
+import { loadLocalDatasetSamples, trainingReferencesOnly } from "../overlays/localSampleInput";
 import { importPortableSample } from "../overlays/portableSample";
 import { loadImageOverlayAsset, type ImageOverlayAsset } from "./imageOverlayAsset";
 
@@ -20,7 +20,7 @@ export function useCameraSample() {
     const generation = ++request.current;
     setPack({ samples: [], issues: [] }); setSelected(""); setError(null); setLoading(true);
     try {
-      const next = await read(controller.signal);
+      const next = trainingReferencesOnly(await read(controller.signal));
       if (generation !== request.current) return;
       setPack(next); setSelected(next.samples[0]?.id ?? "");
     } catch (cause) {

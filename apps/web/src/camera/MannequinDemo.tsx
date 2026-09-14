@@ -84,14 +84,14 @@ export function MannequinDemo({ mode, visible }: { mode: HudMode; visible: boole
       <button aria-pressed={setup === "model"} onClick={() => changeSetup("model")}>Mannequin configuration</button>
     </div>
     {setup === "image" && <section className="camera-image-input" aria-labelledby="camera-image-title">
-      <h3 id="camera-image-title">Choose the labeled image</h3>
+      <h3 id="camera-image-title">Choose labeled training imagery</h3>
       <p>The original surgical image supplies the tissue detail. Its matching mask supplies the boundaries and label positions.</p>
       <div className="setup-row">
         <label className="setup-field">Open camera sample or sample files<input type="file" multiple onChange={event => { sample.loadFiles(event.target.files); event.target.value = ""; }} /></label>
         <label className="setup-field">Open sample folder<input type="file" multiple ref={node => { node?.setAttribute("webkitdirectory", ""); }} onChange={event => { sample.loadFiles(event.target.files); event.target.value = ""; }} /></label>
-        {import.meta.env.MODE === "samples" && <button className="secondary" disabled={sample.loading} onClick={sample.reload}>Reload local samples</button>}
+        {import.meta.env.MODE === "samples" && <button className="secondary" disabled={sample.loading} onClick={sample.reload}>Reload training images</button>}
       </div>
-      <p className="fine-print">On your phone, open the supplied .holospex.json camera sample from Files. On your laptop, choose samples_tst or the matching image, labels and index mask together. Images stay in this browser.</p>
+      <p className="fine-print">Open a prepared training reference folder, or transfer its .holospex.json file to your phone. The image and exact annotation mask stay together. Images stay in this browser.</p>
       {sample.loading && <p className="notice" role="status">Preparing the image and its exact anatomy mask…</p>}
       {sample.error && <p className="error" role="alert">{sample.error}</p>}
       {composite.loading && <p className="notice" role="status">Preparing the mannequin and sample composite…</p>}

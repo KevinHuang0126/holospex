@@ -6,11 +6,13 @@ import { parseResultSet } from "../overlays/videoResults";
 import { sourceLabels, type ResultSource } from "../overlays/frameInput";
 import type { HudMode } from "../overlays/hudControls";
 import { MannequinDemo } from "./MannequinDemo";
+import { LiveFeedDemo } from "./LiveFeedDemo";
 import { HudRecorder } from "./HudRecorder";
 import "./deviceSetup.css";
 
 export function HudDemo() {
   const hud = useHudControls({ frameClock: "external" });
+  const [input, setInput] = useState<"live" | "upload" | "url" | "video" | "model">("live");
   const [clip, setClip] = useState<File | null>(null), [url, setUrl] = useState<string>();
   const [results, setResults] = useState<FrameResult[]>([]);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -38,12 +40,15 @@ export function HudDemo() {
   return <section className="device-setup" aria-labelledby="hud-title">
     <p className="eyebrow">AR / HUD demo</p><h2 id="hud-title">Anatomy in context</h2>
     <div className="setup-row" role="group" aria-label="HUD input">
-      <button aria-pressed={hud.state.experience === "video"} onClick={() => hud.setExperience("video")}>Video</button>
-      <button aria-pressed={hud.state.experience === "model"} onClick={() => hud.setExperience("model")}>Physical model</button>
-      <label>Learning mode <select value={hud.state.mode} onChange={event => hud.setMode(event.target.value as HudMode)}><option value="learn">Learn</option><option value="identify">Identify</option><option value="assess">Assess</option><option value="feedback">Feedback</option></select></label>
+      <button aria-pressed={input === "live"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("live"); }}>Camera identification</button>
+      <button aria-pressed={input === "upload"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("upload"); }}>Upload video</button>
+      <button aria-pressed={input === "url"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("url"); }}>Stream link</button>
+      <button aria-pressed={input === "video"} onClick={() => { hud.setExperience("video"); setInput("video"); }}>Video + saved results</button>
+      <button aria-pressed={input === "model"} onClick={() => { hud.pause(); hud.setExperience("model"); setInput("model"); }}>Training image AR</button>
+      {(input === "video" || input === "model") && <label>Learning mode <select value={hud.state.mode} onChange={event => hud.setMode(event.target.value as HudMode)}><option value="learn">Learn</option><option value="identify">Identify</option><option value="assess">Assess</option><option value="feedback">Feedback</option></select></label>}
       <label className="setup-check"><input type="checkbox" checked={hud.state.overlaysRequested} onChange={event => hud.showOverlays(event.target.checked)} />Show overlays</label>
     </div>
-    {hud.state.experience === "video" ? <>
+    {input === "live" || input === "upload" || input === "url" ? <LiveFeedDemo key={input} source={input} visible={hud.state.overlaysRequested} /> : input === "video" ? <>
       <div className="setup-row">
         <label className="setup-field">Shared surgical clip<input type="file" accept="video/*" onChange={event => {
           request.current += 1; hud.pause(); setResults([]); setError(null); setReady(false);
@@ -63,7 +68,7 @@ export function HudDemo() {
       </div>
       <p className="fine-print">{results.length} validated frame results. Only the selected source at the displayed presentation time can draw anatomy. Files stay local to this browser.</p>
     </> : <MannequinDemo mode={hud.state.mode} visible={hud.state.overlaysRequested} />}
-    {hud.state.experience === "video" && <>
+    {input === "video" && <>
       {error && <p className="error" role="alert">{error}</p>}
       <HudRecorder canvas={canvas} name="video" />
     </>}

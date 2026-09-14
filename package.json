@@ -11,6 +11,8 @@
     "preview:phone": "npm run preview:phone --workspace=@holospex/web",
     "prepare:phone": "node scripts/prepare-phone.mjs",
     "prepare:camera-samples": "node --import tsx scripts/prepare-camera-sample.ts",
+    "model:prepare": "node scripts/run-ml.mjs scripts/prepare-live-model.py",
+    "model:serve": "node scripts/run-ml.mjs -m holospex_ml.live",
     "build": "npm run contracts:generate && npm run prepare:demo && npm run build --workspace=@holospex/web",
     "check": "npm run contracts:check && npm run test:contracts && npm run test:web && tsc --noEmit && npm run typecheck --workspace=@holospex/web",
     "contracts:generate": "node scripts/generate-contracts.mjs",

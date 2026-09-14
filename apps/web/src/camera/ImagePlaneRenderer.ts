@@ -1,9 +1,9 @@
 import { CanvasTexture, DoubleSide, Group, Mesh, MeshBasicMaterial, NoToneMapping, PerspectiveCamera, PlaneGeometry, Scene, SRGBColorSpace, Vector3, WebGLRenderer } from "three";
 import type { HudAnchor } from "../overlays/drawHud";
 import type { ModelPose } from "./modelRegistration";
+import type { ImageOverlayLayer } from "./imageOverlayAsset";
 import { sceneMatrices } from "./cameraProjection";
 
-export interface ImageOverlayLayer { canvas: HTMLCanvasElement; anchors: HudAnchor[] }
 export interface ImagePlaneLayout { width: number; height: number; bottomY: number; centerY: number; z: number }
 export interface ScreenImagePlacement { x: number; y: number; width: number; height: number; scale: number }
 

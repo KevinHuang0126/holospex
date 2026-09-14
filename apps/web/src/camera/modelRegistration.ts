@@ -79,8 +79,3 @@ export function projectModelAnchors(config: ModelRegistration, pose: ModelPose):
   }
   return anchors;
 }
-
-export function registerModel(config: ModelRegistration, corners: { x: number; y: number }[], width: number, height: number): HudAnchor[] | null {
-  const pose = estimateModelPose(config, corners, width, height);
-  return pose ? projectModelAnchors(config, pose) : null;
-}

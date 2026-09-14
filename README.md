@@ -14,11 +14,13 @@ real Endoscapes data acquisition,
 preparation, model training, evaluation, and inference exports. See the
 [ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
 Trained weights and surgical data remain local; the web lesson still uses
-synthetic fixtures. The **Dataset samples** view imports Person 1's local
-Endoscapes stills and exact masks with explicit dataset provenance. See the
-[sample connection handoff](docs/dataset-sample-connection.md) for loading
-`samples_tst` and connecting frontend callbacks. Video prediction integration,
-model calibration, and device validation still need their actual inputs.
+synthetic fixtures. **Camera identification**, **Upload video** and **Stream link**
+identify anatomy through the built-in connection to Person 1's trained model.
+**Training image AR** and `/samples`
+load prepared train-split stills and exact masks with dataset provenance.
+See the [live-feed and training-reference guide](docs/live-feed.md).
+The connection is implemented; trained weights, runtime hosting, local training
+assets and device validation still need their actual inputs.
 Reviewed lesson content and glasses integration remain future work.
 
 **Current ML model:** the September 14 batch-002 DeepLabV3–ResNet50 checkpoint
@@ -28,52 +30,64 @@ for its exact identity, verified artifact retrieval, inference command and
 matching video predictions. A Git checkout does not include the weights or
 prediction exports; the browser's bundled lesson remains synthetic.
 
+For live identification, install the ML virtual environment, then run
+`npm run model:prepare -- --checkpoint PATH_TO_DOWNLOADED_BEST_PT` and
+`npm run model:serve` in one terminal, with `npm run dev` in another.
+The installer and default runner verify Person 1's promoted checkpoint checksum;
+the live runner uses its recorded ResNet50 preprocessing and 0.5 cutoff.
+See [checkpoint setup and phone hosting](docs/live-feed.md).
+
 ## Start the browser app
 
-For phone camera testing, open the [deployed mannequin demo](https://holospex-mannequin-phone.vercel.app/mannequin)
-in your phone browser and allow camera access. The laptop can be turned off.
+For phone camera testing, open the [deployed identification demo](https://holospex.vercel.app/mannequin)
+in your phone browser and allow camera access. Camera preview is independent
+of the laptop; live identification also needs the configured model host running.
 See the [phone setup and redeployment instructions](docs/mannequin-overlay.md#open-it-on-a-phone).
 
 The live camera/mannequin overlay is at **http://127.0.0.1:5174/mannequin**
 when running `npm run dev:samples` (or `/mannequin` on the URL from `npm run dev`).
-The default **Labeled image** overlays the original surgical JPEG and its exact
-anatomy mask on the camera. **Camera screen** keeps the image fixed on screen;
-**Table marker** places it as a flat image beyond a printed marker. Choose
-**Full surgical image** or **Anatomy cutout**, then adjust size and opacity.
-**Scene → Mannequin + sample** places that image on the supplied mannequin
-photo. **Fit anatomy with AI** requests a position and scale from the
-[placement API](docs/anatomy-placement-api.md); sliders allow fine adjustment.
-Use **Table marker** to anchor the mannequin, image and labels together.
-The composite stays flat, and its illustrative placement needs visual checking.
-This preserves supplied dataset annotation provenance; it does not reconstruct
-3D anatomy or run live inference. Learn reveals the image and labels;
-Identify and Assess hide them. Feedback is withheld because reviewed answers
-have not been supplied.
-Local sample mode loads the usable `samples_tst` cases automatically. To use a
-sample on your phone, run `npm run prepare:camera-samples`, transfer one generated
-`.holospex.json` file from `runs/camera-samples/` to the phone's Files app, and
-select it under **Open camera sample or sample files**. Dataset files are excluded
-from the public deployment. **Marker test** and **Mannequin configuration** remain
-available for tracking checks and measured model locations. See the
-[image overlay guide](docs/camera-image-overlay.md) and
-[camera setup guide](docs/mannequin-overlay.md).
+The default **Camera identification** previews a camera or USB capture device
+and checks model readiness automatically. Once Person 1's checkpoint runner is available,
+**Start camera** enables live anatomy identification with the confidence setting
+supplied by the model. While it is unavailable, camera preview stays usable.
+The Python runner and private `/api/identify` bridge are implemented; weights
+are not bundled. Identification allows one request in flight and a 6,000 ms total
+frame-age limit. **Upload video** uses the same model to identify a local clip,
+with play, pause, seek and replay controls; it needs no result JSON or camera
+permission. **Stream link** accepts a direct HTTPS video or HLS URL with
+cross-origin access enabled by its host. Choose the link format and press
+**Connect stream**; use **Reconnect stream** after changing the link or format,
+and **Disconnect stream** to release it. Only sampled frames go to the model.
+See [stream requirements](docs/live-feed.md#identify-a-stream-link) and
+[model startup and hosting](docs/live-feed.md).
 
-To test the current samples independently of the learning frontend:
+Select **Training image AR** to place a labeled training still on the camera
+or supplied mannequin cutout. **Camera screen** needs no marker; **Table marker**
+anchors the image and labels together. **Scene → Mannequin + sample** supports
+manual placement and the separate [placement API](docs/anatomy-placement-api.md).
+These annotations remain training references, not live inference or reviewed
+answers. Marker tests and measured-model configuration remain available.
+
+To prepare and inspect training references, first supply the existing ML
+manifest and its original JPEG/mask files, then run:
 
 ```sh
+python scripts/prepare-training-reference.py --manifest ml/outputs/endoscapes-manifest.json --limit 12
 npm run dev:samples
 ```
 
-Open **http://127.0.0.1:5174/samples**. The standalone React page automatically
-loads the usable cases from `apps/web/tests/samples_tst`, with case navigation,
-overlay controls, learning modes and a click-selection readout. **Reload local
-samples** re-reads that folder. Its sample endpoint is local to this opt-in
-development command; production builds retain the manual folder picker.
+Open **http://127.0.0.1:5174/samples**, or choose **Training image AR** on
+`/mannequin`. **Reload training images** reads ignored `runs/training-reference/`;
+the server-only `HOLOSPEX_TRAINING_REFERENCE_DIR` can select another prepared
+folder. Automatic and manual imports exclude validation/test splits, with no
+fallback to `samples_tst`. The private `/__local-training/` endpoint exists only
+in this opt-in development mode. Missing training assets remain unavailable.
 
-The tester now focuses on the supplied image overlays. Adjust fill opacity,
-switch boundaries and labels independently, or use **Boundaries only** to
-inspect alignment. **Show overlays** instantly returns to the original image.
-Identify and Assess override all layer controls and keep anatomical answers hidden.
+To transfer a prepared training reference to a phone, run
+`npm run prepare:camera-samples` and open a generated `.holospex.json` from
+`runs/camera-samples/` in Training image AR. Images and masks are excluded from
+public deployment. See [preparation and batch options](docs/live-feed.md#training-image-references)
+and the [image controls](docs/camera-image-overlay.md).
 
 Use Node 22.12+ (Node 24 LTS is a suitable team baseline) and npm.
 
@@ -93,8 +107,9 @@ npm run check
 npm run build
 ```
 
-The build is emitted to `apps/web/dist/`. No inference server, account, or API
-key is needed. `npm run prepare:demo` validates and copies a fixed allowlist of
+The build is emitted to `apps/web/dist/`. Preview and local image rendering need
+no model runtime; live identification requires the configured checkpoint runner.
+`npm run prepare:demo` validates and copies a fixed allowlist of
 synthetic source assets and the selected mannequin reference from
 `assets/demo/` into `apps/web/public/demo/`.
 The copy is generated: edit `assets/demo/`, not `public/demo/`.

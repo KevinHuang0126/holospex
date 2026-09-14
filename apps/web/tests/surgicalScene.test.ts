@@ -3,7 +3,7 @@ import test from "node:test";
 import { Box3, Mesh, Vector3 } from "three";
 import { createSurgicalRegistration, createSurgicalScene, disposeSurgicalScene, surgicalLandmarks } from "../src/camera/surgicalScene";
 import { estimateModelPose, projectModelAnchors, projectPoint } from "../src/camera/modelRegistration";
-import { sceneMatrices } from "../src/camera/SurgicalRenderer";
+import { sceneMatrices } from "../src/camera/cameraProjection";
 import { drawHud } from "../src/overlays/drawHud";
 
 test("the tabletop asset contains a 3D open torso and all three named anatomy meshes", () => {
