@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { FrameResult } from "@holospex/contracts";
+import { anatomy, type FrameResult } from "@holospex/contracts";
+import "./videoHud.css";
 import { drawHud } from "./drawHud";
 import { findVideoResult, visibleStructures } from "./videoResults";
 import { sourceLabels, type ResultSource } from "./frameInput";
@@ -38,8 +39,10 @@ export function VideoHud(props: VideoHudProps) {
     const overlay = visibleStructures(result, settings.visible, settings.mode, settings.minimumConfidence);
     setNotice(overlay.warning);
     drawHud(canvas.current, frame ? snapshot.current : null, {
-      width: frame?.width ?? 960, height: frame?.height ?? 540,
+      width: frame?.width ?? (video.current?.videoWidth || 960), height: frame?.height ?? (video.current?.videoHeight || 540),
       sourceLabel: sourceLabels[settings.source], statusLabel: frame ? `${result ? `Frame ${result.frameNumber} · ` : ""}${frame.timestampMs.toFixed(1)} ms` : "Waiting for a video frame",
+      // Reserve the full rail even when a frame has fewer or no visible labels.
+      labelSlots: Object.keys(anatomy).length,
       structures: overlay.structures, warning: overlay.warning,
     });
     settings.onDisplayedFrame?.(result ? { mediaId: result.mediaId, frameNumber: result.frameNumber, timestampMs: result.timestampMs, width: result.width, height: result.height } : null);
@@ -82,6 +85,6 @@ export function VideoHud(props: VideoHudProps) {
       onError={() => setError("Unable to play this clip. Check the file and browser codec support.")} />
     <canvas ref={canvas} style={{ width: "100%", display: "block", background: "#09181e" }} role="img" aria-label={`Video anatomy HUD. ${sourceLabels[props.source]}. ${props.visible ? props.mode : "Overlays hidden"}.`} />
     {error && <p role="alert" className="error">{error}</p>}
-    {notice && <p role="status" className="notice">{notice}</p>}
+    <p role="status" className="notice video-hud-notice">{notice}</p>
   </>;
 }

@@ -1,0 +1,13 @@
+/* Frame warnings can change or disappear without moving playback controls.
+   Longer supplied status reasons remain readable by scrolling this area. */
+.notice.video-hud-notice {
+  box-sizing: border-box;
+  line-height: 1.5;
+  height: calc(2lh + 32px);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.video-hud-notice:empty { visibility: hidden; }
+@media (max-width: 800px) {
+  .notice.video-hud-notice { height: calc(4lh + 32px); }
+}
