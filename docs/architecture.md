@@ -25,15 +25,29 @@ The recorded-lesson path uses precomputed results. The browser can start a
 lesson without a GPU, an inference server, or completed model training.
 
 The [identification client](live-feed.md) accepts a camera/USB capture stream,
-an uploaded video or a direct HTTPS video/HLS link and uses the built-in
+an uploaded image or video, or a direct HTTPS video/HLS link and uses the built-in
 `/api/identify` bridge to the trained Python checkpoint runner. It
-displays each identification with its captured image, bounds capture age and
-clears expired results. The runner reuses Person 1's segmentation adapter;
+displays each identification with its captured image and bounds encoding,
+transit and inference to 6,000 ms from capture. Camera preview stays local;
+**Capture & identify** copies and sends one displayed frame, then holds that
+still with its matching result until **Retake** or a session reset. Hide/show
+controls preserve the camera snapshot and do not send another request. Stopping
+or replacing the camera, interruption, page visibility changes or refreshing
+the model invalidate it. Applying a user-entered confidence cutoff also clears
+the result and pending work; camera mode waits for another explicit capture.
+Uploaded-image selection is also local: **Identify image** sends one resized
+JPEG and holds the matching result on that still. Applying a cutoff keeps the
+image, clears its result and waits for another explicit identification.
+The selected percentage becomes a per-request `minimumConfidence` from 0 to 1
+in the JPEG envelope, controlling both model pixel filtering and HUD visibility
+without mutating the runner default. Readiness advertises support for this
+input; older hosts keep their own default. The runner reuses Person 1's segmentation adapter;
 weights and runtime hosting are supplied separately. Live identification has
 no assessment controls, and marker registration stays independent.
 Uploaded and linked video playback are separate from the lesson's precomputed
-result path. They send sampled captured frames to the model and invalidate
-pending results on seek, source replacement or playback transitions. Capture dimensions
+result path. They send sampled captured frames continuously to the model, expire
+old results outside paused-frame inspection and invalidate pending results on
+seek, source replacement or playback transitions. Capture dimensions
 describe the resized image actually sent, preserving aspect ratio within
 1280 x 720. Predictions and captured pixels share that coordinate system.
 Stream links load directly in the browser with anonymous cross-origin access;

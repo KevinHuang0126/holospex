@@ -1,20 +1,69 @@
-# Camera, video and stream anatomy identification
+# Camera, image, video and stream anatomy identification
 
 `/mannequin` and the full prototype's **AR / HUD demo** open **Camera identification**.
 Choose a camera or USB video capture device, then press **Start camera**.
-When the trained model is ready, frames go through the app's built-in
-`/api/identify` connection and identified anatomy appears on its matching
-camera image. **Stop camera** releases the selected device. Choose **Upload video**
+The preview stays live on the device. When the trained model is ready, press
+**Capture & identify** to freeze one displayed frame and send its JPEG through
+the app's built-in `/api/identify` connection. Anatomy appears on that exact
+captured image, which stays frozen for inspection after the result returns.
+**Retake** clears the capture and returns to the live preview; press
+**Capture & identify** again when the next view is ready. Starting the camera,
+waiting in preview or retaking does not send frames automatically.
+**Stop camera** releases the selected device. **Upload image** previews a local
+still and waits for **Identify image** before sending it to the model.
+Choose **Upload video**
 to select a local clip, or **Stream link** to connect direct HTTPS media. Both
 identify sampled frames using the same trained model. The model connection and
 confidence setting are supplied by the app; identification has no assessment workflow.
 
 Camera preview works while the model is unavailable. **Refresh model** checks
-readiness; the app also retries every ten seconds while an unavailable model's
-feed is running. Camera access needs HTTPS or desktop localhost. The model
+readiness; failed checks retry automatically after ten seconds, even before
+media is selected. The app also checks immediately when the page becomes
+visible or the network comes back online while the page is visible. Camera
+access needs HTTPS or desktop localhost. The model
 expects surgical imagery; an outward-facing camera cannot reveal anatomy
 inside a mannequin. **Training image AR** provides the separate reference
 visualization on a mannequin or marker.
+
+The completed camera result does not expire after six seconds while its
+captured image remains selected. The six-second limit still applies to the
+identification request itself. A failed request leaves a frozen frame with
+an unavailable message; retake to capture again. Show/hide and appearance
+controls preserve the captured image and result without identifying a new
+frame. Hiding overlays does not cancel a request already started; it can finish
+while anatomy is hidden. Capture is disabled until overlays are shown again.
+Replacing or stopping the camera, a camera interruption, a page visibility
+change or **Refresh model** clears the capture and cancels pending work.
+Camera capture does not change continuous identification for uploaded videos
+and stream links.
+
+## Identify an uploaded image
+
+Select **Upload image** and choose a surgical JPEG, PNG or WebP from the device's
+file picker. Files are limited to 20 MiB, with decoded dimensions no larger than
+16,384 pixels per side and 40 megapixels total. Convert HEIC/HEIF files to JPEG
+or PNG before selecting them.
+The preview loads locally without camera permission or result JSON. Selecting
+the file does not send it to the model. When the model is ready and overlays
+are shown, press **Identify image** to send one JPEG through `/api/identify`.
+The result stays on the exact image that was sent, with the same source labels,
+anatomy colors and display controls used for camera and video identification.
+Use **Identify again** to request another result, or **Retry identification**
+after an error. Replacing or removing the file immediately clears its image,
+labels and pending work.
+
+Decoding honors the image's orientation. The displayed and submitted pixels fit
+within 1280 x 720 without upscaling, preserving aspect ratio; labels use those
+same resized dimensions. This supports portrait images without stretching the
+anatomy. The submitted JPEG is re-encoded from the oriented pixels rather than
+passing the source file's EXIF metadata to the runner.
+
+Apply a new **Confidence cutoff (%)** to clear the old result and pending work
+while keeping the selected image. Press **Identify image** again to use the new
+setting. Showing overlays, changing their appearance or waiting for model
+readiness never starts an image request automatically. The six-second request
+limit covers encoding, transit and inference; a completed result does not expire
+while its image remains selected. No model retraining or new API is needed.
 
 ## Identify an uploaded video
 
@@ -103,7 +152,7 @@ Person 1's September 14 [promoted model](../ml/CURRENT_MODEL.md) is
 DeepLabV3–ResNet50, batch-002 seed 42, version
 `2026-09-14T04:29:29.757933Z-epoch-34`. The live runner defaults to
 `ml/weights/current/best.pt`, verifies the published byte count and SHA-256,
-and uses Person 1's documented 0.5 confidence cutoff. This replaces the
+and defaults to Person 1's documented 0.5 confidence cutoff. This replaces the
 historical `small-004-resolution` selection. Pulling Git updates the code and
 handoff; the trained weights must be retrieved from the private artifact store.
 
@@ -148,6 +197,16 @@ Vite forwards `/api/identify` to `http://127.0.0.1:8765/identify` by default.
 Browser requests stay on the app's own origin; no client-side URL configuration
 or cross-origin access to the model is needed.
 
+To test the built frontend locally, run `npm run build`, then
+`npm run preview:phone` and open `http://127.0.0.1:4174/mannequin` on the laptop.
+Vite preview provides the same identification bridge and loopback default as
+development; the trained runner must still be running. Both servers load the
+private identification URL/token from the repository's environment files or
+their process environment at startup. If the runner requires a token, supply
+that same token to the Vite process; it does not read `runner-token.txt`
+automatically. Restart dev/preview after changing those settings. Preview uses
+Vite's production mode locally; Vercel's environment variables remain separate.
+
 ## Phone deployment
 
 `npm run build` followed by `npm run prepare:phone` packages the web app and
@@ -165,7 +224,8 @@ set the token and use `--host 0.0.0.0`. Non-loopback binding requires a token.
 The bridge rejects redirects and never accepts a destination supplied by the
 browser. Neither endpoint configuration nor tokens enter the browser bundle.
 Without the production endpoint, readiness returns HTTP 503 and the app shows
-**Identification model pending**. A phone's localhost refers to the phone,
+**Identification model connection unavailable** with automatic retries.
+A phone's localhost refers to the phone,
 so the model needs a reachable host for deployed identification to work.
 
 ### Restart the current Windows phone setup
@@ -209,10 +269,17 @@ redeployment. The frame budget remains 6,000 ms across capture encoding,
 network transit and inference; tunnel availability does not change that bound.
 
 The optional **Fit anatomy with AI** placement feature remains independent.
-Its OpenAI key does not configure live identification. Starting a feed with a
-ready model and visible overlays sends JPEG frames to the identification runner;
-preview with no ready model sends no camera images. Hiding overlays, stopping
-the feed, changing input or hiding the page cancels pending frame work.
+Its OpenAI key does not configure live identification. Camera mode sends a
+single JPEG only after **Capture & identify** is pressed with the model ready.
+Camera preview sends no camera images, including while the model is available.
+Uploaded images likewise stay local until **Identify image** is pressed; only
+the resized JPEG and its frame identity are sent, without the original file's name.
+Uploaded videos and stream links continue sampling frames while identification
+is enabled. Hiding their overlays pauses identification; stopping or replacing
+an input cancels pending frame work. Camera **Retake** also cancels its pending
+capture and requires another explicit capture before sending an image.
+Hiding camera overlays preserves the capture and any request already started;
+hiding the page or interrupting the camera clears it and cancels pending work.
 
 ## Frame contract and rendering
 
@@ -222,22 +289,32 @@ the feed, changing input or hiding the page cancels pending frame work.
 {
   "status": "ready",
   "model": { "id": "checkpoint-model-id", "version": "checkpoint-version" },
-  "minimumConfidence": 0.61,
+  "minimumConfidence": 0.5,
+  "supportsMinimumConfidence": true,
   "dataset": "Endoscapes-Seg50"
 }
 ```
 
-The number above illustrates the wire format only; runtime confidence comes
-from the runner's explicit setting. `POST /api/identify` sends JSON with:
+Readiness supplies the runner's default cutoff. A true `supportsMinimumConfidence`
+enables the app's **Confidence cutoff (%)** input. Enter 0–100 and select
+**Apply cutoff**; typing alone does not affect identification. Applying a new
+value cancels prior work and clears its result. Camera mode returns to preview
+and waits for **Capture & identify**; image mode keeps the selected image and
+waits for **Identify image**; video modes identify using the new setting.
+Legacy hosts without the capability continue using their default cutoff.
+`POST /api/identify` sends JSON with:
 
 | Field | Value |
 | --- | --- |
 | `frame` | `mediaId`, `frameNumber`, `timestampMs`, `width`, `height` |
 | `imageBase64` | Base64 JPEG containing that exact capture, without a data-URL prefix |
+| `minimumConfidence` | Optional finite number from 0 to 1, converted from the applied percentage; omission uses the runner default |
 
 `mediaId` identifies a capture session. `frameNumber` is a monotonic capture
 counter; skipped inference frames can create gaps. `timestampMs` is the video
-callback's `metadata.mediaTime * 1000`, retaining fractional precision.
+callback's `metadata.mediaTime * 1000`, retaining fractional precision. A manual
+camera snapshot may use its preview capture timestamp when video-frame
+callbacks are unavailable; the copied pixels and identity stay together.
 Return one canonical [FrameResult](../contracts/schemas/frame-result.schema.json)
 with all five identity fields unchanged and `coordinateSpace: "original_pixels"`.
 The Python runner produces direct `ml_prediction` results; the frontend contract
@@ -247,7 +324,7 @@ synthetic fixtures cannot masquerade as live model output.
 
 The camera picker requests 1280 x 720 with each dimension capped at 1920,
 so high-resolution capture devices negotiate a supported stream size. Camera,
-uploaded-video and stream captures then fit within 1280 x 720, preserving aspect
+uploaded-image, uploaded-video and stream captures fit within 1280 x 720, preserving aspect
 ratio without upscaling. Frame identity and overlay geometry use these actual
 captured dimensions; the source video may have a higher resolution. The protocol
 limits a capture to 4096 pixels per side, 4,194,304 total pixels and a
@@ -255,20 +332,34 @@ limits a capture to 4096 pixels per side, 4,194,304 total pixels and a
 limit. The internal bridge and runner cap JSON at 6 MiB and results at 2 MiB. The runner
 validates actual decoded dimensions, refuses rotated EXIF captures, and rejects
 concurrent inference with HTTP 429. Invalid or unavailable results clear anatomy.
-The bridge preserves a sanitized 429 response. The client displays **Identification
-is busy** and waits two seconds before accepting another capture, avoiding
-video-rate retries against an occupied model. Paused frames retain their bounded
-retry limit; if retries are exhausted, use Play or Refresh model.
+The bridge preserves a sanitized 429 response. Continuous video identification
+displays **Identification is busy** and waits two seconds before accepting another
+capture, avoiding video-rate retries against an occupied model. Paused video
+frames retain their bounded retry limit; if retries are exhausted, use Play or
+Refresh model. Manual camera identification does not retry automatically;
+use **Retake**, then **Capture & identify** to try again. Both paths wait for an
+outstanding request to settle before submitting another, even after cancellation.
 An `ok` result with no structures is distinct from failed identification.
 
-The pipeline attempts at most five captures per second with one request in
-flight. Total permitted age is **6,000 ms from capture**, including JPEG encoding,
-network transit and inference. Each accepted result appears with the exact
-captured pixels that produced it and a visible delay readout. An expired result
-returns the HUD to the latest preview with anatomy cleared. A 500 ms camera
-stall clears the view. Stream interruptions, dimension changes and backward
-media timestamps invalidate old work. Browsers without video-frame callbacks
-support preview only. Actual throughput and alignment need device validation.
+Camera identification submits one request per **Capture & identify** action;
+uploaded images require **Identify image**. Neither samples repeatedly while
+previewing, waiting for a response or showing a result. Uploaded videos and
+stream links attempt at most five captures per second with one request in flight.
+All input modes allow **6,000 ms
+from capture** for JPEG encoding, network transit and inference. Every accepted
+result appears with the exact captured pixels that produced it.
+
+The completed camera snapshot remains available until retaken or its session
+is reset. It is visibly a frozen capture, not a current camera overlay. The
+continuous-video path expires old results and returns to preview with anatomy
+cleared, except during deliberate paused-frame inspection. Continuous video
+interruptions, dimension changes and backward media timestamps invalidate old
+work. A frozen camera snapshot keeps its copied pixels through native camera
+dimension or timestamp changes; camera interruption or a page visibility change
+still clears it. Browsers
+without video-frame callbacks support manual camera snapshots and paused-video
+identification; playing-video identification requires those callbacks. Actual
+throughput and alignment need device validation.
 
 The promoted checkpoint was installed and strictly loaded on the Windows CPU
 host on September 14. Nine HTTP predictions using the existing training
@@ -278,8 +369,9 @@ Three further 1280 x 720 requests through Vite's `/api/identify` took
 checks. These are connection and speed checks, not accuracy measurements or
 phone camera tests. The former 750 ms deadline rejected every measured result;
 the six-second bound leaves room for CPU inference, network transit and display
-of the matching captured image. Actual updates on this host will be much slower
-than the five-captures-per-second ceiling.
+of the matching captured image. Continuous uploaded-video and stream updates
+on this host will be much slower than the five-captures-per-second ceiling;
+manual camera captures wait for one result instead of scheduling the next frame.
 
 The September 14 production deployment at `https://holospex.vercel.app/mannequin`
 was also checked through Vercel and the authenticated Cloudflare tunnel. Three
@@ -307,7 +399,10 @@ position, not a separately identified anatomical landmark. **Overlay appearance*
 visible. **Show model scores** reveals component scores when useful for
 inspection. These display controls do not change identification or certainty.
 
-The model's **0.5 per-pixel cutoff remains unchanged**. Exported component
+The model's **default per-pixel cutoff is 0.5**. The applied percentage controls
+both per-pixel filtering in the runner and confidence filtering in the overlay.
+Each request carries its own cutoff without changing another user's settings
+or the model's export defaults. Exported component
 scores are the mean softmax of pixels that survive the cutoff, and are not
 calibrated probabilities of anatomical correctness. Increasing the cutoff
 can hide more anatomy; reducing it can admit additional false positives.
@@ -332,8 +427,11 @@ delay, but it does not establish better segmentation accuracy.
 
 ## Frontend integration
 
-`LiveFeedDemo` owns camera selection, uploaded files, stream links, readiness
-and recording controls. URL playback uses browser media loading and the
+`LiveFeedDemo` owns camera selection, uploaded image/video files, stream links, readiness
+and recording controls. `LiveFeedHud` owns the manual **Capture & identify** /
+**Retake** controls and the frozen camera result. `UploadedImageHud` owns local
+image decoding, explicit **Identify image** and persistent image results.
+URL playback uses browser media loading and the
 optional HLS adapter; the model bridge and frame contract stay unchanged.
 A custom frontend can use the same renderer:
 

@@ -12,7 +12,7 @@ import "./deviceSetup.css";
 
 export function HudDemo() {
   const hud = useHudControls({ frameClock: "external" });
-  const [input, setInput] = useState<"live" | "upload" | "url" | "video" | "model">("live");
+  const [input, setInput] = useState<"live" | "image" | "upload" | "url" | "video" | "model">("live");
   const [clip, setClip] = useState<File | null>(null), [url, setUrl] = useState<string>();
   const [results, setResults] = useState<FrameResult[]>([]);
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
@@ -41,6 +41,7 @@ export function HudDemo() {
     <p className="eyebrow">AR / HUD demo</p><h2 id="hud-title">Anatomy in context</h2>
     <div className="setup-row" role="group" aria-label="HUD input">
       <button aria-pressed={input === "live"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("live"); }}>Camera identification</button>
+      <button aria-pressed={input === "image"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("image"); }}>Upload image</button>
       <button aria-pressed={input === "upload"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("upload"); }}>Upload video</button>
       <button aria-pressed={input === "url"} onClick={() => { hud.pause(); hud.setExperience("video"); setInput("url"); }}>Stream link</button>
       <button aria-pressed={input === "video"} onClick={() => { hud.setExperience("video"); setInput("video"); }}>Video + saved results</button>
@@ -48,7 +49,7 @@ export function HudDemo() {
       {(input === "video" || input === "model") && <label>Learning mode <select value={hud.state.mode} onChange={event => hud.setMode(event.target.value as HudMode)}><option value="learn">Learn</option><option value="identify">Identify</option><option value="assess">Assess</option><option value="feedback">Feedback</option></select></label>}
       <label className="setup-check"><input type="checkbox" checked={hud.state.overlaysRequested} onChange={event => hud.showOverlays(event.target.checked)} />Show overlays</label>
     </div>
-    {input === "live" || input === "upload" || input === "url" ? <LiveFeedDemo key={input} source={input} visible={hud.state.overlaysRequested} /> : input === "video" ? <>
+    {input === "live" || input === "image" || input === "upload" || input === "url" ? <LiveFeedDemo key={input} source={input} visible={hud.state.overlaysRequested} /> : input === "video" ? <>
       <div className="setup-row">
         <label className="setup-field">Shared surgical clip<input type="file" accept="video/*" onChange={event => {
           request.current += 1; hud.pause(); setResults([]); setError(null); setReady(false);

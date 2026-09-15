@@ -46,7 +46,7 @@ def request_body(**updates):
     return json.dumps(value).encode()
 
 
-def fake_prediction(frame, image):
+def fake_prediction(frame, image, minimum_confidence=None):
     return {"schemaVersion": "1.0.0", "mediaId": frame.media_id,
             "frameNumber": frame.frame_number, "timestampMs": frame.timestamp_ms,
             "width": frame.width, "height": frame.height,
@@ -81,7 +81,7 @@ class LiveIdentificationTests(unittest.TestCase):
     def test_ready_and_prediction_preserve_original_capture_identity_without_files(self):
         captured = []
 
-        def predict(frame, image):
+        def predict(frame, image, minimum_confidence):
             captured.append((frame, image.mode, image.size, image.getpixel((0, 0))))
             result = fake_prediction(frame, image)
             result["structures"] = [{"instanceId": "test-only", "structureId": "gallbladder",
@@ -93,7 +93,8 @@ class LiveIdentificationTests(unittest.TestCase):
             status, ready, headers = request(port, "GET")
             self.assertEqual(status, 200)
             self.assertEqual(ready, {"status": "ready", "model": MODEL,
-                                     "minimumConfidence": 0.61, "dataset": "Endoscapes-Seg50"})
+                                     "minimumConfidence": 0.61, "supportsMinimumConfidence": True,
+                                     "dataset": "Endoscapes-Seg50"})
             self.assertEqual(headers["Cache-Control"], "no-store")
             status, result, _ = request(port, body=request_body())
             self.assertEqual(status, 200)
@@ -118,7 +119,7 @@ class LiveIdentificationTests(unittest.TestCase):
             invalid.append(request_body(frame=frame))
         frame = dict(FRAME, width=4096, height=MAX_IMAGE_PIXELS // 4096 + 1)
         invalid.append(request_body(frame=frame))
-        with running_server(lambda frame, image: calls.append(frame)) as port:
+        with running_server(lambda frame, image, minimum_confidence: calls.append(frame)) as port:
             for body in invalid:
                 with self.subTest(body=body[:70]):
                     status, result, _ = request(port, body=body)
@@ -144,11 +145,38 @@ class LiveIdentificationTests(unittest.TestCase):
             with running_server() as port:
                 self.assertEqual(request(port, body=request_body())[0], 400)
 
+    def test_request_cutoff_accepts_boundaries_and_does_not_change_server_default(self):
+        cutoffs = []
+
+        def predict(frame, image, minimum_confidence):
+            cutoffs.append(minimum_confidence)
+            return fake_prediction(frame, image)
+
+        with running_server(predict) as port:
+            for values in ({}, {"minimumConfidence": 0}, {"minimumConfidence": 1},
+                           {"minimumConfidence": 0.83}, {}):
+                with self.subTest(values=values):
+                    self.assertEqual(request(port, body=request_body(**values))[0], 200)
+            self.assertEqual(request(port, "GET")[1]["minimumConfidence"], 0.61)
+        self.assertEqual(cutoffs, [0.61, 0, 1, 0.83, 0.61])
+
+    def test_invalid_request_cutoff_is_rejected_before_inference(self):
+        predict = Mock(side_effect=fake_prediction)
+        with running_server(predict) as port:
+            for value in (None, True, False, "0.5", "", [], {}, -0.01, 1.01,
+                          float("nan"), float("inf"), -float("inf")):
+                with self.subTest(value=value):
+                    status, result, _ = request(port, body=request_body(minimumConfidence=value))
+                    self.assertEqual(status, 400)
+                    self.assertEqual(result["status"], "error")
+            self.assertEqual(request(port, body=request_body())[0], 200)
+        self.assertEqual(predict.call_count, 1, "invalid values do not run or change the model")
+
     def test_busy_inference_drops_new_requests_but_health_remains_available(self):
         entered, release = threading.Event(), threading.Event()
         calls, responses = [], []
 
-        def blocked_predictor(frame, image):
+        def blocked_predictor(frame, image, minimum_confidence):
             calls.append(frame)
             entered.set()
             self.assertTrue(release.wait(3))
@@ -175,7 +203,7 @@ class LiveIdentificationTests(unittest.TestCase):
                        {"structures": [{"invalid": "geometry"}]}):
             calls = []
 
-            def predict(frame, image):
+            def predict(frame, image, minimum_confidence):
                 result = fake_prediction(frame, image)
                 if not calls:
                     result.update(change)
@@ -188,7 +216,7 @@ class LiveIdentificationTests(unittest.TestCase):
                 self.assertEqual(error, {"status": "error", "message": "Identification unavailable."})
                 self.assertEqual(request(port, body=request_body())[0], 200)
 
-        def fails(frame, image):
+        def fails(frame, image, minimum_confidence):
             raise RuntimeError("sensitive checkpoint path or frame must not escape")
 
         with running_server(fails) as port:
@@ -210,7 +238,7 @@ class LiveIdentificationTests(unittest.TestCase):
             self.assertEqual(request(port, "OPTIONS")[0], 405)
 
     def test_unavailable_predictions_remain_empty_and_have_canonical_status(self):
-        def predict(frame, image):
+        def predict(frame, image, minimum_confidence):
             result = fake_prediction(frame, image)
             result.update(status="unsupported", statusReason="Test-only unsupported input")
             return result
@@ -233,8 +261,8 @@ class LiveIdentificationTests(unittest.TestCase):
                                    "dataset": {"dataset": "endoscapes-seg50"},
                                    "classes": [{"structureId": value} for value in classes]}
 
-            def predict_rgb_details(self, frame, rgb):
-                received.append((frame, rgb))
+            def predict_rgb_details(self, frame, rgb, *, threshold=None):
+                received.append((frame, rgb, threshold))
                 return fake_prediction(frame, rgb), None, None
 
         with tempfile.TemporaryDirectory() as directory:
@@ -246,13 +274,16 @@ class LiveIdentificationTests(unittest.TestCase):
                 "holospex_ml.inference": SimpleNamespace(SegmentationAdapter=FakeAdapter),
             }):
                 predict, model = load_predictor(checkpoint, "cpu", 0.61)
-                frame, image = decode_request(request_body())
+                frame, image, cutoff = decode_request(request_body())
                 with image:
                     predict(frame, image)
+                    predict(frame, image, 0.82)
                     predict(frame, image)
                 self.assertEqual(model, MODEL)
                 self.assertEqual(instances, [(checkpoint, "cpu", 0.61)])
-                self.assertEqual(len(received), 2)
+                self.assertEqual(len(received), 3)
+                self.assertEqual([item[2] for item in received], [None, 0.82, None])
+                self.assertIsNone(cutoff)
                 self.assertEqual(received[0][0], FrameInput("test-camera", 17, 321.5, 4, 3))
             self.assertEqual(list(Path(directory).iterdir()), [checkpoint])
 
@@ -316,7 +347,7 @@ class CurrentModelTests(unittest.TestCase):
                 if mutate_on_load:
                     checkpoint.write_bytes(b"x" + checkpoint.read_bytes()[1:])
 
-            def predict_rgb_details(self, frame, image):
+            def predict_rgb_details(self, frame, image, *, threshold=None):
                 result = fake_prediction(frame, image)
                 result["model"] = {"id": self.checkpoint["model_id"],
                                    "version": self.checkpoint["model_version"]}

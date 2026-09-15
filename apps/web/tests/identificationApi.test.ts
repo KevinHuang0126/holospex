@@ -43,6 +43,15 @@ test("identification readiness returns only the public model contract and uses s
   assert.equal(result.headers["Cache-Control"], "no-store"); assert.equal(result.headers["X-Content-Type-Options"], "nosniff");
 });
 
+test("readiness advertises editable confidence only for an explicit true capability", async () => {
+  for (const supportsMinimumConfidence of [undefined, true, false, "true", 1, null, {}, []]) {
+    const provider = { ...ready(), ...(supportsMinimumConfidence === undefined ? {} : { supportsMinimumConfidence }), privatePath: "/local/weights.pt" };
+    const response = await call(handler(async () => Response.json(provider)), undefined, { method: "GET" });
+    assert.equal(response.status, 200, "legacy model readiness stays usable");
+    assert.deepEqual(response.body, { ...ready(), ...(supportsMinimumConfidence === true ? { supportsMinimumConfidence: true } : {}) });
+  }
+});
+
 test("identification POST forwards the validated JSON capture and returns exact model geometry", async () => {
   const result = prediction();
   const api = handler(async (url, options) => {
@@ -53,6 +62,43 @@ test("identification POST forwards the validated JSON capture and returns exact 
   });
   assert.deepEqual((await call(api)).body, result);
   assert.equal((await call(api, undefined, { parsed: capture() })).status, 200, "Vercel's parsed request bodies remain bounded and validated");
+});
+
+test("optional confidence is forwarded unchanged and omission leaves the model default intact", async () => {
+  const forwarded: unknown[] = [];
+  const api = handler(async (_url, options) => {
+    forwarded.push(JSON.parse(String(options?.body)));
+    return Response.json(prediction());
+  });
+  for (const minimumConfidence of [undefined, 0, 0.005, 0.37, 0.5, 1]) {
+    const body = { ...capture(), ...(minimumConfidence === undefined ? {} : { minimumConfidence }) };
+    for (const options of [{}, { parsed: body }]) {
+      const response = await call(api, body, options);
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, prediction(), "the FrameResult response contract stays unchanged");
+      assert.deepEqual(forwarded.at(-1), body);
+      assert.equal(Object.hasOwn(forwarded.at(-1) as object, "minimumConfidence"), minimumConfidence !== undefined);
+    }
+  }
+  assert.equal(forwarded.length, 12);
+});
+
+test("invalid confidence is rejected before sending any capture to the model", async () => {
+  let calls = 0;
+  const api = handler(async () => { calls++; return Response.json(prediction()); });
+  for (const minimumConfidence of [null, "0.5", "50%", true, false, -0.01, 1.01, [], {}]) {
+    const body = { ...capture(), minimumConfidence };
+    for (const options of [{}, { parsed: body }]) {
+      const response = await call(api, body, options);
+      assert.equal(response.status, 400);
+      assert.equal(response.body.message, "The minimum confidence must be a number between 0 and 1.");
+    }
+  }
+  for (const value of ["1e400", "-1e400"]) {
+    const raw = JSON.stringify(capture()).slice(0, -1) + `,"minimumConfidence":${value}}`;
+    assert.equal((await call(api, undefined, { raw })).status, 400, "JSON numeric overflow must remain invalid");
+  }
+  assert.equal(calls, 0);
 });
 
 test("origin and method checks reject cross-origin GET/POST without calling the model", async () => {

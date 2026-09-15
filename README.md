@@ -14,7 +14,7 @@ real Endoscapes data acquisition,
 preparation, model training, evaluation, and inference exports. See the
 [ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
 Trained weights and surgical data remain local; the web lesson still uses
-synthetic fixtures. **Camera identification**, **Upload video** and **Stream link**
+synthetic fixtures. **Camera identification**, **Upload image**, **Upload video** and **Stream link**
 identify anatomy through the built-in connection to Person 1's trained model.
 **Training image AR** and `/samples`
 load prepared train-split stills and exact masks with dataset provenance.
@@ -34,7 +34,9 @@ For live identification, install the ML virtual environment, then run
 `npm run model:prepare -- --checkpoint PATH_TO_DOWNLOADED_BEST_PT` and
 `npm run model:serve` in one terminal, with `npm run dev` in another.
 The installer and default runner verify Person 1's promoted checkpoint checksum;
-the live runner uses its recorded ResNet50 preprocessing and 0.5 cutoff.
+the live runner uses its recorded ResNet50 preprocessing and a default 0.5 cutoff.
+Enter a **Confidence cutoff (%)** and select **Apply cutoff** to use your own
+value for camera captures, uploaded images or videos, or stream links.
 See [checkpoint setup and phone hosting](docs/live-feed.md).
 
 ## Start the browser app
@@ -47,12 +49,20 @@ See the [phone setup and redeployment instructions](docs/mannequin-overlay.md#op
 The live camera/mannequin overlay is at **http://127.0.0.1:5174/mannequin**
 when running `npm run dev:samples` (or `/mannequin` on the URL from `npm run dev`).
 The default **Camera identification** previews a camera or USB capture device
-and checks model readiness automatically. Once Person 1's checkpoint runner is available,
-**Start camera** enables live anatomy identification with the confidence setting
-supplied by the model. While it is unavailable, camera preview stays usable.
+and checks model readiness automatically. **Start camera** opens the live preview.
+Once Person 1's checkpoint runner is available, **Capture & identify** sends one
+displayed frame and freezes it with its matching anatomy result. **Retake**
+returns to preview; another explicit capture is needed to send the next frame.
+While the model is unavailable, camera preview stays usable.
 The Python runner and private `/api/identify` bridge are implemented; weights
-are not bundled. Identification allows one request in flight and a 6,000 ms total
-frame-age limit. **Upload video** uses the same model to identify a local clip,
+are not bundled. Identification allows one request in flight and 6,000 ms from
+capture for encoding, transit and inference. A completed camera snapshot stays
+visible until retaken or its session resets. **Upload image** previews a local
+surgical image; press **Identify image** to send it to the model and retain its
+matching result. Selecting a file does not send it automatically. Applying a new
+cutoff clears the result while keeping the image for another explicit identification.
+**Upload video** uses the same model
+to identify sampled frames continuously from a local clip,
 with play, pause, seek and replay controls; it needs no result JSON or camera
 permission. **Stream link** accepts a direct HTTPS video or HLS URL with
 cross-origin access enabled by its host. Choose the link format and press

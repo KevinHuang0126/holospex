@@ -1,7 +1,7 @@
 # Labeled surgical image over the camera
 
-`/mannequin` now defaults to **Live feed**; see the [live-feed guide](live-feed.md)
-for camera/USB capture and opt-in inference. Select **Training image AR**, then
+`/mannequin` defaults to **Camera identification**; see the [live-feed guide](live-feed.md)
+for camera/USB preview and **Capture & identify**. Select **Training image AR**, then
 **Labeled image**, for this reference-image path. The original surgical JPEG provides
 tissue detail, and its matching index mask supplies colored boundaries and
 label positions. This is virtual placement of an existing image, not a 3D

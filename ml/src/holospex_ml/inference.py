@@ -8,6 +8,7 @@ anatomical correctness or a CVS assessment.
 
 from pathlib import Path
 import json
+import math
 
 import cv2
 import numpy as np
@@ -135,8 +136,12 @@ class SegmentationAdapter:
             rgb = np.array(image.convert('RGB'))
         return self.predict_rgb_details(frame, rgb)
 
-    def predict_rgb_details(self, frame: FrameInput, rgb):
-        """Infer an original-resolution decoded RGB frame without JPEG files."""
+    def predict_rgb_details(self, frame: FrameInput, rgb, *, threshold=None):
+        """Infer RGB with an optional per-call cutoff; the adapter default is unchanged."""
+        selected_threshold = self.threshold if threshold is None else threshold
+        if (type(selected_threshold) not in (int, float)
+                or not 0 <= selected_threshold <= 1 or not math.isfinite(selected_threshold)):
+            raise ValueError('threshold must be a finite number in [0,1]')
         rgb = np.asarray(rgb)
         if rgb.dtype != np.uint8 or rgb.shape != (frame.height, frame.width, 3):
             raise ValueError('RGB input must be uint8 H×W×3 matching frame dimensions')
@@ -154,7 +159,7 @@ class SegmentationAdapter:
             logits = F.interpolate(logits, size=(frame.height, frame.width), mode='bilinear', align_corners=False)
             probabilities = logits.softmax(dim=1)[0].cpu().numpy()
         structures, labels, withheld = masks_to_structures(
-            probabilities, self.checkpoint['classes'], self.threshold, self.min_area,
+            probabilities, self.checkpoint['classes'], selected_threshold, self.min_area,
         )
         result = {
             'schemaVersion': '1.0.0', 'mediaId': frame.media_id,

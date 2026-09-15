@@ -6,13 +6,14 @@ import type { HudMode } from "./overlays/hudControls";
 
 export function MannequinApp() {
   const hud = useHudControls();
-  const [input, setInput] = useState<"live" | "upload" | "url" | "reference">("live");
+  const [input, setInput] = useState<"live" | "image" | "upload" | "url" | "reference">("live");
   return <main>
-    <header className="topbar"><a className="wordmark" href="/mannequin"><span className="brand-icon">H</span>Holospex</a><span className="prototype-tag">Live video / anatomy HUD</span></header>
-    <section className="intro"><p className="eyebrow">Video anatomy identification</p><h1>Your video.<br /><span>Anatomy in context.</span></h1><p>Identify anatomy from your camera, an uploaded video, or a stream link using the trained model. Use Training image AR to explore labeled training imagery on the mannequin.</p></section>
+    <header className="topbar"><a className="wordmark" href="/mannequin"><span className="brand-icon">H</span>Holospex</a><span className="prototype-tag">Image / video anatomy HUD</span></header>
+    <section className="intro"><p className="eyebrow">Anatomy identification</p><h1>Your view.<br /><span>Anatomy in context.</span></h1><p>Identify anatomy from your camera, an uploaded image or video, or a stream link using the trained model. Use Training image AR to explore labeled training imagery on the mannequin.</p></section>
     <section className="device-setup" aria-label="Live anatomy demo">
       <div className="setup-row" role="group" aria-label="Input mode">
         <button aria-pressed={input === "live"} onClick={() => setInput("live")}>Camera identification</button>
+        <button aria-pressed={input === "image"} onClick={() => setInput("image")}>Upload image</button>
         <button aria-pressed={input === "upload"} onClick={() => setInput("upload")}>Upload video</button>
         <button aria-pressed={input === "url"} onClick={() => setInput("url")}>Stream link</button>
         <button aria-pressed={input === "reference"} onClick={() => setInput("reference")}>Training image AR</button>

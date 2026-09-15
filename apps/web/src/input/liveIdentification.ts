@@ -12,6 +12,7 @@ export interface IdentificationModel {
   status: "ready";
   model: { id: string; version: string };
   minimumConfidence: number;
+  supportsMinimumConfidence?: true;
   dataset: "Endoscapes-Seg50";
 }
 const ENDPOINT = "/api/identify";
@@ -113,7 +114,8 @@ async function readModelReadiness(signal: AbortSignal): Promise<IdentificationMo
   if (!value || value.status !== "ready" || value.dataset !== "Endoscapes-Seg50" || !value.model || !text(value.model.id) || !text(value.model.version)
     || typeof value.minimumConfidence !== "number" || !Number.isFinite(value.minimumConfidence) || value.minimumConfidence < 0 || value.minimumConfidence > 1)
     throw new Error("The identification model has not supplied valid readiness and confidence settings.");
-  return { status: "ready", model: { id: value.model.id, version: value.model.version }, minimumConfidence: value.minimumConfidence, dataset: "Endoscapes-Seg50" };
+  return { status: "ready", model: { id: value.model.id, version: value.model.version }, minimumConfidence: value.minimumConfidence,
+    dataset: "Endoscapes-Seg50", ...(value.supportsMinimumConfidence === true ? { supportsMinimumConfidence: true } : {}) };
 }
 
 /** Checks Person 1's deployed model without sending camera pixels; bounded to five seconds. */
@@ -138,8 +140,10 @@ export async function loadIdentificationModel(signal: AbortSignal): Promise<Iden
 }
 
 /** Sends one captured JPEG to the app's own trained-model endpoint. */
-export async function identifyLiveFrame(frame: DisplayedFrame, image: Blob, signal: AbortSignal): Promise<FrameResult> {
+export async function identifyLiveFrame(frame: DisplayedFrame, image: Blob, signal: AbortSignal, minimumConfidence?: number): Promise<FrameResult> {
   abortIfRequested(signal);
+  if (minimumConfidence !== undefined && (typeof minimumConfidence !== "number" || !Number.isFinite(minimumConfidence)
+    || minimumConfidence < 0 || minimumConfidence > 1)) throw new Error("Confidence cutoff must be a number between 0 and 1.");
   const expected = captureIdentity(frame);
   if (image.type !== "image/jpeg" || image.size <= 0) throw new Error("Live identification requires a nonempty JPEG capture.");
   if (image.size > MAX_CAPTURE_BYTES) throw new Error("The JPEG capture exceeds the 3 MiB identification limit.");
@@ -151,7 +155,8 @@ export async function identifyLiveFrame(frame: DisplayedFrame, image: Blob, sign
   const imageBase64 = btoa(chunks.join(""));
   abortIfRequested(signal);
   const response = await fetch(ENDPOINT, {
-    method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ frame: expected, imageBase64 }),
+    method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ frame: expected, imageBase64, ...(minimumConfidence === undefined ? {} : { minimumConfidence }) }),
     credentials: "same-origin", redirect: "error", cache: "no-store", referrerPolicy: "no-referrer", signal,
   });
   return validateLiveResult(await identificationResponse(response, signal), expected);

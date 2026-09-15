@@ -199,3 +199,39 @@ test("the largest accepted JPEG produces a request below the hosting platform's 
   assert.ok(Buffer.byteLength(body) < 4_500_000);
   assert.deepEqual(Buffer.from(JSON.parse(body).imageBase64, "base64"), Buffer.from(bytes));
 });
+
+test("a supplied cutoff travels with its capture, including zero and one, without changing later defaults", async t => {
+  const bodies: Record<string, unknown>[] = [];
+  t.mock.method(globalThis, "fetch", async (_url: unknown, init?: RequestInit) => {
+    bodies.push(JSON.parse(init?.body as string)); return Response.json(prediction());
+  });
+  const signal = new AbortController().signal;
+  for (const cutoff of [0, 0.375, 1]) {
+    await identifyLiveFrame(frame, jpeg, signal, cutoff);
+    assert.equal(bodies.at(-1)?.minimumConfidence, cutoff);
+    assert.deepEqual(bodies.at(-1)?.frame, frame);
+  }
+  await identifyLiveFrame(frame, jpeg, signal);
+  assert.equal(Object.hasOwn(bodies.at(-1)!, "minimumConfidence"), false);
+});
+
+test("invalid cutoffs cannot read or send camera pixels", async t => {
+  let reads = 0, calls = 0;
+  t.mock.method(jpeg, "arrayBuffer", async () => { reads++; return new ArrayBuffer(0); });
+  t.mock.method(globalThis, "fetch", async () => { calls++; return Response.json(prediction()); });
+  for (const value of [null, false, true, "0.5", "", [], {}, -0.01, 1.01, NaN, Infinity, -Infinity])
+    await assert.rejects(identifyLiveFrame(frame, jpeg, new AbortController().signal, value as number), /Confidence cutoff/);
+  assert.equal(reads, 0); assert.equal(calls, 0);
+});
+
+test("only an explicit runner capability enables a request-specific cutoff", async t => {
+  const ready = { status: "ready", model: { id: "person1-model", version: "trained-v1" }, minimumConfidence: 0.5, dataset: "Endoscapes-Seg50" };
+  let capability: unknown = true;
+  t.mock.method(globalThis, "fetch", async () => Response.json({ ...ready, supportsMinimumConfidence: capability }));
+  const signal = new AbortController().signal;
+  assert.deepEqual(await loadIdentificationModel(signal), { ...ready, supportsMinimumConfidence: true });
+  for (const unsupported of [undefined, false, null, 1, "true", {}]) {
+    capability = unsupported;
+    assert.deepEqual(await loadIdentificationModel(signal), ready);
+  }
+});

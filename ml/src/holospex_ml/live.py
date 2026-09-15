@@ -35,7 +35,7 @@ MAX_IMAGE_PIXELS = 4 * 1024 * 1024
 MAX_IMAGE_DIMENSION = 4096
 MAX_SAFE_INTEGER = 2**53 - 1
 DATASET = "Endoscapes-Seg50"
-Predictor = Callable[[FrameInput, Any], dict[str, Any]]
+Predictor = Callable[[FrameInput, Any, float], dict[str, Any]]
 
 
 def _finite_number(value: Any, maximum: float) -> bool:
@@ -77,7 +77,7 @@ def _reject_constant(value: str) -> None:
     raise ValueError("Nonfinite JSON number")
 
 
-def decode_request(body: bytes) -> tuple[FrameInput, Any]:
+def decode_request(body: bytes) -> tuple[FrameInput, Any, float | None]:
     """Validate metadata and decode an unrotated, original-size RGB JPEG in RAM."""
     from PIL import Image
 
@@ -85,8 +85,13 @@ def decode_request(body: bytes) -> tuple[FrameInput, Any]:
         raise ValueError("Request size exceeds the limit")
     value = json.loads(body, object_pairs_hook=_unique_object,
                        parse_constant=_reject_constant)
-    if not isinstance(value, dict) or set(value) != {"frame", "imageBase64"}:
+    required = {"frame", "imageBase64"}
+    if (not isinstance(value, dict) or not required <= set(value)
+            or set(value) - required - {"minimumConfidence"}):
         raise ValueError("Invalid identification request")
+    threshold = value.get("minimumConfidence")
+    if "minimumConfidence" in value and not _finite_number(threshold, 1):
+        raise ValueError("Minimum confidence must be a number in [0, 1]")
     frame = _frame(value["frame"])
     encoded = value["imageBase64"]
     if not isinstance(encoded, str) or not encoded or len(encoded) % 4:
@@ -108,7 +113,7 @@ def decode_request(body: bytes) -> tuple[FrameInput, Any]:
             image = source.convert("RGB")
     except Image.DecompressionBombError as error:
         raise ValueError("JPEG dimensions exceed the pixel limit") from error
-    return frame, image
+    return frame, image, threshold
 
 
 def _validate_prediction(result: Any, frame: FrameInput, model: dict[str, str]) -> None:
@@ -125,7 +130,7 @@ def _validate_prediction(result: Any, frame: FrameInput, model: dict[str, str]) 
 def create_server(host: str, port: int, predictor: Predictor,
                   model: dict[str, str], minimum_confidence: float,
                   token: str | None = None) -> ThreadingHTTPServer:
-    """Build a testable runner; predictor receives (FrameInput, RGB PIL image).
+    """Build a runner; predictor receives (FrameInput, RGB PIL image, cutoff).
 
     The nonblocking lock covers reading, decoding, and inference. A stalled model
     holds that lock until it really returns; disconnected clients cannot create
@@ -191,7 +196,8 @@ def create_server(host: str, port: int, predictor: Predictor,
         def do_GET(self) -> None:
             if self._allowed():
                 self._json(200, {"status": "ready", "model": loaded_model,
-                                 "minimumConfidence": minimum_confidence, "dataset": DATASET})
+                                 "minimumConfidence": minimum_confidence,
+                                 "supportsMinimumConfidence": True, "dataset": DATASET})
 
         def do_POST(self) -> None:
             if not self._allowed():
@@ -218,13 +224,14 @@ def create_server(host: str, port: int, predictor: Predictor,
                     body = self.rfile.read(int(lengths[0]))
                     if len(body) != int(lengths[0]):
                         raise ValueError("Truncated request")
-                    frame, image = decode_request(body)
+                    frame, image, requested_threshold = decode_request(body)
                 except (ValueError, OSError, RecursionError):
                     self._error(400, "Invalid JPEG or captured frame metadata.")
                     return
                 try:
                     with image:
-                        result = predictor(frame, image)
+                        threshold = minimum_confidence if requested_threshold is None else requested_threshold
+                        result = predictor(frame, image, threshold)
                     _validate_prediction(result, frame, loaded_model)
                     self._json(200, result)
                 except Exception:
@@ -291,8 +298,8 @@ def load_predictor(checkpoint: Path | None = None, device: str = "auto",
         current_model.verify_checkpoint(checkpoint)  # Refuse a replacement during loading.
     model = {"id": metadata["model_id"], "version": metadata["model_version"]}
 
-    def predict(frame: FrameInput, image: Any) -> dict[str, Any]:
-        return adapter.predict_rgb_details(frame, np.asarray(image))[0]
+    def predict(frame: FrameInput, image: Any, minimum_confidence: float | None = None) -> dict[str, Any]:
+        return adapter.predict_rgb_details(frame, np.asarray(image), threshold=minimum_confidence)[0]
 
     return predict, model
 

@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 from pathlib import Path
 import tempfile
 
@@ -105,3 +106,42 @@ class MaskExportTests(unittest.TestCase):
         np.testing.assert_array_equal(from_file[1], from_rgb[1])
         self.assertTrue((from_rgb[1] == 1).all())
         self.assertEqual(from_rgb[1].shape, (8, 12))
+
+    def test_per_call_cutoff_changes_export_without_mutating_default_or_raw_predictions(self):
+        class ConstantModel:
+            calls = 0
+
+            def __call__(self, tensor):
+                self.calls += 1
+                # Explicit deterministic test output: foreground probability 0.8.
+                logits = torch.zeros_like(tensor[:, :1])
+                return {'out': torch.cat((logits, logits + np.log(4)), dim=1)}
+
+        adapter = SegmentationAdapter.__new__(SegmentationAdapter)
+        adapter.model, adapter.device = ConstantModel(), torch.device('cpu')
+        adapter.threshold, adapter.min_area = 0.5, 4
+        adapter.checkpoint = {
+            'input_size': {'width': 6, 'height': 4},
+            'normalization': {'mean': [0, 0, 0], 'std': [1, 1, 1]},
+            'classes': self.classes, 'model_id': 'constant-test-output', 'model_version': 'fixture',
+        }
+        rgb = np.zeros((8, 12, 3), dtype=np.uint8)
+        frame = FrameInput(media_id='fixture', frame_number=0, timestamp_ms=0, width=12, height=8)
+        baseline = adapter.predict_rgb_details(frame, rgb)
+        self.assertEqual(len(baseline[0]['structures']), 1)
+        for threshold, expected_count in ((0.9, 0), (0, 1), (1, 0), (None, 1)):
+            with self.subTest(threshold=threshold):
+                result, raw, _ = adapter.predict_rgb_details(frame, rgb, threshold=threshold)
+                self.assertEqual(len(result['structures']), expected_count)
+                np.testing.assert_array_equal(raw, baseline[1])
+                self.assertEqual(adapter.threshold, 0.5)
+        with tempfile.TemporaryDirectory() as directory:
+            file_frame = replace(frame, image_path=Path(directory) / 'fixture.png')
+            Image.fromarray(rgb).save(file_frame.image_path)
+            self.assertEqual(adapter.predict_details(file_frame)[0], baseline[0])
+
+        calls = adapter.model.calls
+        for threshold in (True, False, "0.5", [], -0.1, 1.1, float('nan'), float('inf')):
+            with self.subTest(invalid=threshold), self.assertRaises(ValueError):
+                adapter.predict_rgb_details(frame, rgb, threshold=threshold)
+        self.assertEqual(adapter.model.calls, calls, 'invalid cutoffs fail before model inference')

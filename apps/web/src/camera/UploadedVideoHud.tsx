@@ -57,7 +57,7 @@ export function UploadedVideoHud(props: UploadedVideoHudProps) {
       : terminalError.current ? terminalError.current
       : !display ? status.current
       : !active.visible ? "Video preview. Anatomy hidden; identification paused."
-      : !active.identify ? "Video preview. The anatomy identification model is not ready yet."
+      : !active.identify ? "Video preview. Connecting to the identification model; this frame will be identified when connected."
       : paired ? warning ?? (overlay.structures.length ? inspection.current ? "Inspecting the frozen video frame. Play to resume." : "Anatomy identified in the displayed video frame." : "No supported anatomy identified in this frame.")
       : status.current;
     setNotice(message);

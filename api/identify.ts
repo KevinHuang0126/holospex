@@ -38,9 +38,13 @@ function endpointUrl(value: string): string {
   } catch { throw new IdentificationError(503, IDENTIFICATION_UNAVAILABLE); }
 }
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === "object" && !Array.isArray(value); }
-function parseInput(value: unknown): { frame: FrameIdentity; imageBase64: string } {
-  if (!record(value) || Object.keys(value).some(key => key !== "frame" && key !== "imageBase64") || !record(value.frame))
+function parseInput(value: unknown): { frame: FrameIdentity; imageBase64: string; minimumConfidence?: number } {
+  if (!record(value) || Object.keys(value).some(key => !["frame", "imageBase64", "minimumConfidence"].includes(key)) || !record(value.frame))
     throw new IdentificationError(400, "Send a captured frame and its JPEG image.");
+  const hasMinimumConfidence = Object.hasOwn(value, "minimumConfidence"), minimumConfidence = value.minimumConfidence;
+  if (hasMinimumConfidence && (typeof minimumConfidence !== "number" || !Number.isFinite(minimumConfidence)
+    || minimumConfidence < 0 || minimumConfidence > 1))
+    throw new IdentificationError(400, "The minimum confidence must be a number between 0 and 1.");
   const frame = value.frame;
   if (Object.keys(frame).some(key => !["mediaId", "frameNumber", "timestampMs", "width", "height"].includes(key))
     || typeof frame.mediaId !== "string" || !frame.mediaId.trim() || frame.mediaId.length > 256
@@ -56,7 +60,8 @@ function parseInput(value: unknown): { frame: FrameIdentity; imageBase64: string
   const image = Buffer.from(encoded, "base64");
   if (image.length < 4 || image[0] !== 255 || image[1] !== 216 || image[2] !== 255 || image.toString("base64") !== encoded)
     throw new IdentificationError(400, "The capture must contain a base64 JPEG image.");
-  return { frame: frame as unknown as FrameIdentity, imageBase64: encoded };
+  return { frame: frame as unknown as FrameIdentity, imageBase64: encoded,
+    ...(hasMinimumConfidence ? { minimumConfidence: minimumConfidence as number } : {}) };
 }
 function aborted(signal: AbortSignal) { if (signal.aborted) throw new IdentificationError(504, IDENTIFICATION_UNAVAILABLE); }
 async function cancellable<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
@@ -134,7 +139,8 @@ function readyStatus(value: unknown) {
     || typeof value.minimumConfidence !== "number" || !Number.isFinite(value.minimumConfidence) || value.minimumConfidence < 0 || value.minimumConfidence > 1)
     throw new IdentificationError(503, IDENTIFICATION_UNAVAILABLE);
   // Copy the public contract only; private service diagnostics never reach the browser.
-  return { status: "ready", model: { id: value.model.id, version: value.model.version }, minimumConfidence: value.minimumConfidence, dataset: value.dataset };
+  return { status: "ready", model: { id: value.model.id, version: value.model.version }, minimumConfidence: value.minimumConfidence, dataset: value.dataset,
+    ...(value.supportsMinimumConfidence === true ? { supportsMinimumConfidence: true } : {}) };
 }
 
 /** A fixed, server-configured model bridge. Captures and credentials are never stored. */

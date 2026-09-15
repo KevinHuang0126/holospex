@@ -4,8 +4,10 @@ Open `/mannequin` on the running React app. With `npm run dev:samples`, the
 address is http://127.0.0.1:5174/mannequin. The same setup is also available in
 **AR / HUD demo → Training image AR** in the full prototype.
 
-The default is **Camera identification**. See [camera, video and stream setup](live-feed.md)
-for preview and the built-in trained-model connection. **Upload video** opens a
+The default is **Camera identification**. Its live preview has **Capture & identify**
+to freeze and identify one frame, and **Retake** to return to preview.
+See [camera, image, video and stream setup](live-feed.md) for the trained-model connection.
+**Upload image** opens a local image for **Identify image**; **Upload video** opens a
 local clip; **Stream link** connects direct HTTPS video or HLS media. Select **Training image AR**
 to use the camera/marker setup documented below.
 
@@ -38,8 +40,11 @@ vercel deploy --cwd runs/holospex-mannequin-phone --yes --prod
 
 Open the resulting HTTPS URL with `/mannequin` on the end directly in
 Safari on iPhone or Chrome on Android, tap **Start camera**, and allow access.
-The rear camera is preferred by default. Live preview needs no reference file;
-live anatomy requires the configured trained checkpoint runner.
+The rear camera is preferred by default. Live preview needs no reference file.
+When the configured trained checkpoint runner is ready, tap **Capture & identify**
+to send one displayed frame. The captured image and matching anatomy stay frozen
+until **Retake** or a session reset. Retake returns to preview and does not send
+another image until the next explicit capture.
 For a remote source, choose **Stream link** and **Connect stream**; its host
 must permit cross-origin playback and frame capture. See
 [stream formats and controls](live-feed.md#identify-a-stream-link). Phone and
@@ -59,8 +64,9 @@ as well. Rebuild, prepare and deploy again when changing the app.
 The prepared upload contains built browser assets, approved synthetic fixtures
 and the mannequin cutout, plus separate placement and identification APIs. It excludes local
 training data, weights and portable camera samples. Reference images, marker
-processing and model configurations stay in the browser. Live camera uploads
-occur after **Start camera** when the model is ready and overlays are visible;
+processing and model configurations stay in the browser. Camera identification
+uploads one JPEG only when **Capture & identify** is pressed with the model
+ready and overlays visible. Starting the camera or retaking stays in local preview;
 the placement API never receives camera frames. The private `/__local-training/` development endpoint is absent from
 the deployed build, and there is no automatic test-sample fallback.
 `npm run preview:phone` is available for checking the build locally on port 4174.
