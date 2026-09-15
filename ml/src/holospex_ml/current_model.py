@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Any
 
 CHECKPOINT_PATH = Path(__file__).resolve().parents[2] / "weights/current/best.pt"
-CHECKPOINT_SHA256 = "b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911"
+CHECKPOINT_SHA256 = "9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b"
 CHECKPOINT_BYTES = 168351963
 MODEL_ID = "holospex-deeplabv3-resnet50"
-MODEL_VERSION = "2026-09-14T04:29:29.757933Z-epoch-34"
+MODEL_VERSION = "2026-09-14T16:39:12.476979Z-epoch-43"
 ARCHITECTURE = "deeplabv3_resnet50"
 INPUT_SIZE = {"width": 672, "height": 384}
 NORMALIZATION = {"mean": [0.485, 0.456, 0.406], "std": [0.229, 0.224, 0.225]}

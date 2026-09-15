@@ -280,7 +280,7 @@ class LiveIdentificationTests(unittest.TestCase):
                     predict(frame, image, 0.82)
                     predict(frame, image)
                 self.assertEqual(model, MODEL)
-                self.assertEqual(instances, [(checkpoint, "cpu", 0.61)])
+                self.assertEqual(instances, [(checkpoint.resolve(), "cpu", 0.61)])
                 self.assertEqual(len(received), 3)
                 self.assertEqual([item[2] for item in received], [None, 0.82, None])
                 self.assertIsNone(cutoff)
@@ -362,7 +362,7 @@ class CurrentModelTests(unittest.TestCase):
             with Image.new("RGB", (4, 3)) as image:
                 frame = FrameInput("test-camera", 17, 321.5, 4, 3)
                 first, second = predict(frame, image), predict(frame, image)
-            self.assertEqual(instances, [(checkpoint, "cpu", 0.5)])
+            self.assertEqual(instances, [(checkpoint.resolve(), "cpu", 0.5)])
             self.assertEqual(model, {"id": current_model.MODEL_ID, "version": current_model.MODEL_VERSION})
             self.assertEqual(first["model"], model)
             self.assertEqual(first, second)
@@ -408,7 +408,7 @@ class CurrentModelTests(unittest.TestCase):
                 patch("holospex_ml.live.os.environ", {}), \
                 patch("sys.stdout", output), patch("sys.stderr", error):
             self.assertEqual(main(["--device", "cpu"]), 0)
-            load.assert_called_once_with(checkpoint, "cpu", 0.5)
+            load.assert_called_once_with(checkpoint.resolve(), "cpu", 0.5)
             create.assert_called_once_with("127.0.0.1", 8765, fake_prediction, MODEL, 0.5, None)
             server.server_close.assert_called_once()
             self.assertIn(MODEL["version"], output.getvalue())

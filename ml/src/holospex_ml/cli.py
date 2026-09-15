@@ -104,6 +104,17 @@ def main(argv: list[str] | None = None) -> int:
     video.add_argument("--threshold", type=float, default=0.5)
     video.add_argument("--min-area", type=int, default=64)
     video.add_argument("--max-frames", type=int, help="Explicitly mark a partial export for a wiring check; omit for the full clip")
+    latency = commands.add_parser("benchmark-latency", help="Compare four inference runtime variants on fixed validation images")
+    latency.add_argument("--checkpoint", type=Path, required=True)
+    latency.add_argument("--manifest", type=Path, required=True)
+    latency.add_argument("--output-dir", type=Path, required=True, help="New directory for raw timings, parity checks and report")
+    latency.add_argument("--device", choices=["cpu", "mps", "cuda"], required=True, help="Explicit device; never silently fall back")
+    latency.add_argument("--repeats", type=int, default=3)
+    latency.add_argument("--warmup", type=int, default=5)
+    latency.add_argument("--profile-frames", type=int, default=10)
+    latency.add_argument("--limit", type=int, help="Limit validation images for a smoke check; omit for the full set")
+    latency.add_argument("--seed", type=int, default=42)
+    latency.add_argument("--cpu-threads", type=int, default=4)
     compare = commands.add_parser("compare", help="Inspect original images, supplied annotations, and raw model predictions")
     compare.add_argument("--checkpoint", type=Path, required=True)
     compare.add_argument("--manifest", type=Path, required=True)
@@ -216,6 +227,14 @@ def main(argv: list[str] | None = None) -> int:
             adapter = SegmentationAdapter(args.checkpoint, device=args.device, threshold=args.threshold, min_area=args.min_area)
             report = export_video(adapter, args.input, args.output, args.media_id, max_frames=args.max_frames)
             print(json.dumps({key: value for key, value in report.items() if key not in {"frames", "training"}}, indent=2))
+        elif args.command == "benchmark-latency":
+            from .benchmark import benchmark_latency
+            report = benchmark_latency(args.checkpoint, args.manifest, args.output_dir,
+                device=args.device, repeats=args.repeats, warmup=args.warmup,
+                profile_frames=args.profile_frames, limit=args.limit, seed=args.seed,
+                cpu_threads=args.cpu_threads)
+            print(json.dumps(report["summary"], indent=2))
+            print(f"Wrote latency report: {args.output_dir / 'RESULTS.md'}")
     except (ContractError, OSError, ValueError, RuntimeError, ImportError) as error:
         print(f"Error: {error}", file=sys.stderr)
         if isinstance(error, ImportError):

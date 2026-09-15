@@ -232,11 +232,26 @@ def best_full_run(runs):
     return best_run(eligible)
 
 
+def replication_ready(state, marker):
+    """Finish the launched comparison before freezing a new repeat group."""
+    groups = state.get("replication_groups", {})
+    if isinstance(groups, dict) and marker["replicate_best_full"] in groups:
+        # Members of an already frozen group may run concurrently.
+        return True
+    return all(run.get("state") in TERMINAL
+               and (run["state"] != "JOB_STATE_SUCCEEDED"
+                    or (isinstance(run.get("audit"), dict) and verified_score(run) is not None))
+               for run in state["runs"] if run.get("historical") is not True)
+
+
 def choose_next(state, remaining_seconds):
     """Use verified validation results; all proposals retain the held-out data."""
     if remaining_seconds < MIN_LAUNCH_SECONDS or len(state["runs"]) >= min(state.get("max_runs", MAX_LAUNCHES), MAX_LAUNCHES):
         return None
     if state["queue"]:
+        pending = state["queue"][0]
+        if "replicate_best_full" in pending and not replication_ready(state, pending):
+            return None  # Keep the marker queued until selection can use every result.
         candidate = state["queue"].pop(0)
     else:
         best = best_run([*state["runs"], *state.get("reference_runs", [])])
@@ -455,6 +470,8 @@ class Controller:
             raise ValueError("Replication group/seed already has a persisted launch intent")
         group = groups.get(identity)
         if identity not in groups:
+            if not replication_ready(self.state, marker):
+                raise ValueError("Replication selection requires terminal candidates and independently verified successes")
             best = best_full_run(self.state["runs"])
             if best is None:
                 raise ValueError("Replication marker requires a fully completed verified owned run")
@@ -466,6 +483,10 @@ class Controller:
                      "source_foreground_macro_iou": best["audit"]["foreground_macro_iou"],
                      "source_epochs": best["audit"]["epochs_completed"], "selected_at": now().isoformat(),
                      "selection": "best_verified_fully_completed_owned_native_validation_iou", "recipe": frozen,
+                     "candidate_outcomes": [{"name": run["name"], "state": run["state"],
+                                             "foreground_macro_iou": verified_score(run) if run["state"] == "JOB_STATE_SUCCEEDED" else None,
+                                             "full_recipe_eligible": best_full_run([run]) is not None}
+                                            for run in self.state["runs"] if run.get("historical") is not True],
                      "recipe_sha256": hashlib.sha256(json.dumps(frozen, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()}
         if (not isinstance(group, dict) or not isinstance(group.get("recipe"), dict)
                 or "replicate_best_full" in group["recipe"]

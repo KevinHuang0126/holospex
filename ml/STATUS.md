@@ -1,5 +1,100 @@
 # ML run record — September 14, 2026
 
+## Cloud deployment verification
+
+The selected epoch-43 model now runs on Cloud Run (4 vCPU, 8 GiB, concurrency 1,
+minimum 0 / maximum 1) and serves Kevin's
+[Vercel deployment](https://holospex-mu.vercel.app/mannequin). Both direct and
+Vercel-proxied synthetic inference passed the shared schema and exact frame
+identity checks. The browser shows model readiness. Direct requests without the
+token are rejected; the token remains server-side. All 358 ML tests and the web
+checks/build/package passed. These checks establish connectivity, not anatomical
+accuracy or real-device performance. See [CLOUD_INFERENCE.md](CLOUD_INFERENCE.md)
+for deployment identifiers, measured request times and cold-start limits.
+
+## Model promotion before cloud deployment
+
+The user requested the best verified model and all current work on `main` before
+cloud hosting. The live-identification/frontend branch has been integrated.
+The selected checkpoint is now the weight-decay-0.05 seed-42 winner: **53.3060%**
+native foreground IoU, **36.4221%** pooled small-anatomy IoU and **32.8865%**
+equal-case small-anatomy IoU. It improves the previous selection by **0.4809 pp**.
+
+A fresh audit ranked 33 collected runs, rechecked fixed validation identities and
+confusion metrics, verified all 18 winner artifacts, and strictly loaded the model
+on CPU. Selection is epoch 43 from a complete 53-epoch run. Plate IoU falls
+1.4733 pp and recall falls 7.5970 pp; no test or clinical validation is implied.
+See [current usage](CURRENT_MODEL.md) and the [tracked selection receipt](CURRENT_MODEL_SELECTION.json).
+The prior checkpoint and receipt are preserved locally. Existing precomputed
+video exports and the other account's deployed model retain their previous identities.
+No cloud hosting or training was started by this update.
+
+Validation passes: **355 ML tests**, **17 script tests**, `npm run check`,
+`npm run build`, `npm run prepare:phone`, and the default model installer.
+The local browser and API both verified the pinned model with a synthetic
+video/frame; remote deployment and real-device performance remain unverified.
+
+## Historical regularization-window closure
+
+The [matched regularization tests](REGULARIZATION_TESTS.md) are **complete**:
+four Spot A100 jobs succeeded, with **212/212 epochs and 72 verified artifacts**.
+All training ended by **20:50:41 UTC**; after recovery of a stalled local download,
+the controller closed at **21:35:55 UTC**, before the fixed 21:45:36 deadline.
+All owned jobs, controller processes and temporary helpers are confirmed stopped.
+
+The new tests did **not** improve the best checkpoint. Across matched seeds
+42/43/44, native foreground means are **52.1333% ± 0.6130 pp** at decay 0.01,
+**51.9158% ± 0.4175 pp** at 0.025 and **52.5370% ± 0.9472 pp** at 0.05
+(sample standard deviations). The intermediate value loses to 0.05 in all
+three seeds. Completing the missing control reduces the estimated 0.05-versus-0.01
+mean gain to **+0.4037 foreground**, +0.5415 pooled small and +0.8686 equal-case
+small points; seed 44 regresses on the first two metrics. Plate recall remains
+a weakness. Three seeds and repeated validation selection do not establish
+statistical significance or unseen-case performance.
+
+The best research checkpoint remains **53.3060% native foreground IoU**, and
+the selected demo remains **52.8251%**. All four new checkpoints and the research
+leader passed strict CPU loading. The 75% target is unmet; no test inference or
+automatic promotion occurred. The local ML suite passed **342 tests**.
+See the [final comparison](outputs/regularization-20260914-1945/reports/final/RESULTS.md),
+[chart](outputs/regularization-20260914-1945/reports/final/native-score-grid.png),
+[independent audit](outputs/regularization-20260914-1945/independent-result-audits/comparison-summary.json)
+and [closure receipt](outputs/regularization-20260914-1945/closure-verification.json).
+The next supported experiment is a bounded native-grid checkpoint-selection
+audit of twelve retained snapshots; exact availability and scope are recorded
+in the run guide. No further cloud training is launched by this recommendation.
+
+## Historical first accuracy follow-up window
+
+The following record describes the earlier window and its then-available
+two matched controls. The complete three-seed comparison above supersedes its
+paired mean estimates and proposed missing-control test.
+
+The [autonomous accuracy follow-ups](FOLLOWUP_ITERATION.md) are **complete**.
+All four Spot A100 jobs succeeded: **212 full epochs, 72 verified artifacts**,
+no failed or partial runs. The controller closed at **17:59:46 UTC**, before its
+18:34:19 deadline; all owned jobs and the temporary keep-awake helper are stopped.
+
+The best research result is **53.3060% native foreground IoU**, up from
+**52.8251% (+0.4809 points)**, using weight decay 0.05. Pooled small IoU is
+36.4221%, and equal-case small IoU is 32.8865%. Both matched seeds improve;
+mean gains are **+0.6949 foreground**, +0.9733 small pooled and +0.5633 equal-case
+points. The three-seed mean is 52.5370% (range 51.4790–53.3060%). Plate recall
+regresses in the best seed, so the class/case tradeoffs remain material.
+The 75% target was not reached; no test inference was performed.
+
+The [research checkpoint](outputs/followups-20260914-1509/results/followup-20260914-1509-001-moco-wd005/train/best.pt)
+passed strict CPU loading. The selected demo at `ml/weights/current/best.pt`
+and its video exports remain unchanged. See the [final report](outputs/followups-20260914-1509/reports/final/RESULTS.md),
+[chart](outputs/followups-20260914-1509/reports/final/comparison.png),
+[independent audit](outputs/followups-20260914-1509/independent-result-audits/window-summary.json)
+and [closure receipt](outputs/followups-20260914-1509/closure-verification.json).
+The local controller change passed 44 targeted and 342 full-workspace ML tests.
+The next comparison is the missing same-data seed-44 baseline, followed by an
+intermediate weight-decay trial if that third pair supports the gain.
+
+## Selected demo and completed review batch
+
 The [second reviewed-data training batch](REVIEW_BATCH_002.md) is **complete**.
 Both approved A100 jobs succeeded, completing **53 epochs each / 106 total**.
 All 36 collected artifacts passed checksum verification; independent audits
@@ -7,7 +102,7 @@ recomputed the unchanged 75-image native validation metrics. The controller
 closed at **05:11:20 UTC**, ahead of its 06:25:44 deadline, with no owned jobs
 remaining active.
 
-The best local checkpoint is now **`ml/weights/current/best.pt`**, batch-002 seed 42,
+The selected demo checkpoint is **`ml/weights/current/best.pt`**, batch-002 seed 42,
 selected at epoch 34/53. Native six-class foreground IoU improved from
 **52.0409% to 52.8251% (+0.7842 percentage points)**. Small-anatomy pooled IoU
 improved **34.6151% → 35.7053%**, and equal-case small IoU **28.2247% → 32.2752%**.

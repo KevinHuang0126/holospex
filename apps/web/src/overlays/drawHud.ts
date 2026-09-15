@@ -71,7 +71,11 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   const stacked = displayWidth < 760;
   const railWidth = stacked ? displayWidth : 300;
   const areaWidth = stacked ? displayWidth : displayWidth - railWidth;
-  const layoutLabels = Math.max(allLabels.length, scene.labelSlots ?? 0);
+  // Video anatomy uses permanent class rows. Missing classes leave empty slots
+  // instead of moving every later label, warning and the video viewport.
+  const anatomyIds = Object.keys(anatomy) as AnatomyId[];
+  const layoutLabels = Math.max(allLabels.length, scene.labelSlots ?? 0, scene.anchors ? 0 : anatomyIds.length);
+  const labelRow = (index: number) => scene.anchors ? index : anatomyIds.indexOf(labels[index].structureId);
   const areaHeight = stacked ? areaWidth * scene.height / scene.width : Math.max(440, layoutLabels * 62 + 300);
   const railX = stacked ? 0 : areaWidth, railY = stacked ? areaHeight : 0;
   // The phone layout gets a small numbered connection strip above its header.
@@ -121,13 +125,13 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   const ordered = labels.map((label, index) => ({ label, index })).sort((a, b) => a.label.x - b.label.x || a.index - b.index);
   const columns = Math.max(1, Math.floor(areaWidth / 28));
   const connection = (index: number) => {
-    const rank = ordered.findIndex(item => item.index === index), row = Math.floor(rank / columns);
-    const count = Math.min(columns, labels.length - row * columns);
+    const rank = scene.anchors ? ordered.findIndex(item => item.index === index) : labelRow(index), row = Math.floor(rank / columns);
+    const count = Math.min(columns, (scene.anchors ? labels.length : layoutLabels) - row * columns);
     return { x: (rank % columns + 0.5) * areaWidth / count, y: railY + row * 24 + 12 };
   };
   labels.forEach((label, index) => {
     const x = rect.x + label.x * rect.scale, y = rect.y + label.y * rect.scale;
-    context.beginPath(); context.moveTo(x, y); context.lineTo(stacked ? connection(index).x : areaWidth, stacked ? areaHeight : labelTop - 6 + index * 62);
+    context.beginPath(); context.moveTo(x, y); context.lineTo(stacked ? connection(index).x : areaWidth, stacked ? areaHeight : labelTop - 6 + labelRow(index) * 62);
     context.strokeStyle = "#06151a"; context.lineWidth = 4; context.stroke();
     context.strokeStyle = anatomy[label.structureId].color; context.lineWidth = 1.5; context.stroke();
     context.beginPath(); context.arc(x, y, 4, 0, Math.PI * 2); context.fillStyle = anatomy[label.structureId].color; context.fill();
@@ -154,12 +158,12 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   if (scene.statusLabel) wrapText(context, scene.statusLabel, railX + 18, y + 12, railWidth - 36, 20);
   labels.forEach((label, index) => {
     if (!stacked) {
-      context.beginPath(); context.moveTo(railX, railY + labelTop - 6 + index * 62); context.lineTo(railX + 26, railY + labelTop - 6 + index * 62);
+      context.beginPath(); context.moveTo(railX, railY + labelTop - 6 + labelRow(index) * 62); context.lineTo(railX + 26, railY + labelTop - 6 + labelRow(index) * 62);
       context.strokeStyle = anatomy[label.structureId].color; context.lineWidth = 1.5; context.stroke();
     }
-    badge(label, index, railX + 26, railY + labelTop - 6 + index * 62);
+    badge(label, index, railX + 26, railY + labelTop - 6 + labelRow(index) * 62);
     context.fillStyle = anatomy[label.structureId].color; context.font = "bold 18px system-ui";
-    const afterLabel = wrapText(context, label.label ?? anatomy[label.structureId].label, railX + 44, railY + labelTop + index * 62, railWidth - 62, 22);
+    const afterLabel = wrapText(context, label.label ?? anatomy[label.structureId].label, railX + 44, railY + labelTop + labelRow(index) * 62, railWidth - 62, 22);
     const predicted = scene.source === "ml_prediction" || scene.source === "propagated_prediction";
     const score = !scene.anchors && predicted ? scene.structures.find(item => item.instanceId === label.id)?.confidence : undefined;
     if (scene.appearance?.showConfidence && typeof score === "number" && Number.isFinite(score) && score >= 0 && score <= 1) {
@@ -168,7 +172,7 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
     }
   });
   if (scene.warning) {
-    const warningY = railY + connectionHeight + Math.max(175, labels.length * 62 + 155);
+    const warningY = railY + connectionHeight + Math.max(175, layoutLabels * 62 + 155);
     context.fillStyle = "#4d3410"; context.fillRect(railX + 10, warningY - 22, railWidth - 20, height - warningY + 12);
     context.fillStyle = "#ffe7a3"; context.font = "bold 17px system-ui";
     wrapText(context, `! ${scene.warning}`, railX + 20, warningY, railWidth - 40, 24);
