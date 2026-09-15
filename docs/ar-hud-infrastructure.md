@@ -105,7 +105,10 @@ Video and overlays are copied into the same canvas from each captured frame.
 This keeps geometry attached to the displayed image even if the browser misses a
 callback. Seek/loading/errors clear the composed view. A source/mode/visibility
 change redraws the cached displayed frame immediately. Labels live outside the
-image in a dark rail; on narrow screens the rail moves below the image. Fill,
+image in a dark rail; on narrow screens the rail moves below the image. The rail
+reserves 12 label rows and a warning area, so changing detections or hiding labels
+does not resize the video. Anatomy classes retain their fixed rows; extra anchor
+labels use a count notice while all supported contours remain visible. Fill,
 outlines, leader lines, colors, provenance, and warning boxes use the same output
 canvas, which is also the recording source. Source-only inputs from a previous
 media ID cannot match the new video.

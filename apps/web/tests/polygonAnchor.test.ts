@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { anatomy, type AnatomyId } from "@holospex/contracts";
 import { polygonAnchor } from "../src/overlays/polygonAnchor";
-import { drawHud, type HudScene } from "../src/overlays/drawHud";
+import { drawHud, HUD_LABEL_CAPACITY, type HudScene } from "../src/overlays/drawHud";
 
 type Point = [number, number];
 const concave: Point[] = [[0, 0], [100, 0], [100, 20], [20, 20], [20, 80], [100, 80], [100, 100], [0, 100]];
@@ -121,5 +121,43 @@ test("every combination of visible anatomy keeps the video, class rows and warni
       for (const badge of sparse.badges) assert.ok(full.badges.some(call => JSON.stringify(call) === JSON.stringify(badge)));
       assert.deepEqual(render(visible, null).layout, full.layout);
     }
+  }
+});
+
+test("the shared twelve-label rail never resizes for caller hints, source text, hidden labels or overflow", () => {
+  const anchors = Array.from({ length: 40 }, (_, index) => ({ id: `anchor-${index}`, structureId: "cystic_duct" as const,
+    label: `Anchor ${String(index + 1).padStart(2, "0")}`, x: 20 + index * 10, y: 40 }));
+  for (const width of [300, 335, 336, 759, 760, 1200]) {
+    const { canvas, calls } = drawing(width), image = {} as CanvasImageSource;
+    const baseline = drawHud(canvas, image, { ...scene, structures: [], anchors: [], labelSlots: 0 })!;
+    const dimensions = [canvas.width, canvas.height];
+    for (const count of [0, 1, 12, 13, 40]) {
+      calls.length = 0;
+      const supplied = anchors.slice(0, count);
+      const layout = drawHud(canvas, image, { ...scene, anchors: supplied, labelSlots: count + 100,
+        sourceLabel: "A longer supplied source description with changing frame provenance",
+        statusLabel: "Frame 100 at 1000 milliseconds", warning: count % 2 ? "Partial visibility." : null });
+      assert.deepEqual(layout, baseline, "Labels and legacy caller hints cannot change the image or rail geometry");
+      assert.deepEqual([canvas.width, canvas.height], dimensions);
+      assert.deepEqual(calls.find(call => call.name === "drawImage")?.args,
+        [image, baseline.image.x, baseline.image.y, baseline.image.width, baseline.image.height]);
+      const names = calls.filter(call => call.name === "fillText" && /^Anchor \d+$/.test(String(call.args[0])));
+      assert.deepEqual(names.map(call => call.args[0]), supplied.slice(0, HUD_LABEL_CAPACITY).map(item => item.label));
+      assert.equal(calls.filter(call => call.name === "arc" && call.args[2] === 4).length, Math.min(count, HUD_LABEL_CAPACITY));
+      assert.equal(calls.filter(call => call.name === "closePath").length, scene.structures.length, "Overflow never removes image contours");
+      const overflow = calls.some(call => call.name === "fillText" && String(call.args[0]).includes("Showing 12 of"));
+      assert.equal(overflow, count > HUD_LABEL_CAPACITY);
+      if (names.length) {
+        const lastRow = Number(names.at(-1)!.args[2]);
+        assert.ok(lastRow < baseline.height - 140, "All twelve rows leave room for the reserved warning area");
+      }
+      calls.length = 0;
+      assert.deepEqual(drawHud(canvas, image, { ...scene, anchors: supplied, labelSlots: 0,
+        appearance: { showLabels: false }, warning: null }), baseline);
+      assert.ok(!calls.some(call => call.name === "arc" || call.name === "fillText" && /Anchor|Showing/.test(String(call.args[0]))));
+    }
+    calls.length = 0;
+    drawHud(canvas, image, { ...scene, anchors: [...anchors.slice(0, 12), { ...anchors[12], x: scene.width + 1 }] });
+    assert.ok(!calls.some(call => call.name === "fillText" && String(call.args[0]).includes("Showing")), "Invalid anchors are excluded from the overflow count");
   }
 });

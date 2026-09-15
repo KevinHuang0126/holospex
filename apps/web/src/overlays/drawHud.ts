@@ -1,6 +1,8 @@
 import { anatomy, type AnatomyId, type FrameResult } from "@holospex/contracts";
 import { polygonAnchor } from "./polygonAnchor";
 
+export const HUD_LABEL_CAPACITY = 12;
+
 export interface HudAnchor { id: string; structureId: AnatomyId; x: number; y: number; label?: string }
 export interface HudAppearance {
   fillOpacity?: number;
@@ -15,7 +17,7 @@ export interface HudScene {
   statusLabel?: string;
   structures: FrameResult["structures"];
   anchors?: HudAnchor[];
-  /** Reserve space so hiding answers does not zoom or move the underlying image. */
+  /** Legacy caller hint; the shared rail always reserves HUD_LABEL_CAPACITY rows. */
   labelSlots?: number;
   /** Native-resolution raster layers, already validated against their still. */
   raster?: { fill: CanvasImageSource; outline: CanvasImageSource };
@@ -62,7 +64,12 @@ function structureLabels(structures: HudScene["structures"]): HudAnchor[] {
 export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | null, scene: HudScene) {
   const allLabels: HudAnchor[] = (scene.anchors ?? structureLabels(scene.structures)).filter(label => Number.isFinite(label.x) && Number.isFinite(label.y)
     && label.x >= 0 && label.x <= scene.width && label.y >= 0 && label.y <= scene.height);
-  const labels = scene.appearance?.showLabels === false ? [] : allLabels;
+  // Keep the supplied anchor order and permanent anatomy rows. Extra labels
+  // never grow the rail; their original polygons/raster remain on the image.
+  const labels = scene.appearance?.showLabels === false ? [] : allLabels.slice(0, HUD_LABEL_CAPACITY);
+  const overflow = scene.appearance?.showLabels !== false && allLabels.length > HUD_LABEL_CAPACITY
+    ? `Showing ${HUD_LABEL_CAPACITY} of ${allLabels.length} labels.` : null;
+  const warning = [overflow, scene.warning].filter(Boolean).join(" ");
   const boundaries = scene.appearance?.showBoundaries !== false;
   const requestedOpacity = scene.appearance?.fillOpacity;
   const fillOpacity = typeof requestedOpacity === "number" && Number.isFinite(requestedOpacity)
@@ -74,7 +81,7 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   // Video anatomy uses permanent class rows. Missing classes leave empty slots
   // instead of moving every later label, warning and the video viewport.
   const anatomyIds = Object.keys(anatomy) as AnatomyId[];
-  const layoutLabels = Math.max(allLabels.length, scene.labelSlots ?? 0, scene.anchors ? 0 : anatomyIds.length);
+  const layoutLabels = HUD_LABEL_CAPACITY;
   const labelRow = (index: number) => scene.anchors ? index : anatomyIds.indexOf(labels[index].structureId);
   const areaHeight = stacked ? areaWidth * scene.height / scene.width : Math.max(440, layoutLabels * 62 + 300);
   const railX = stacked ? 0 : areaWidth, railY = stacked ? areaHeight : 0;
@@ -82,7 +89,7 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   // Reserve it even when labels are hidden so the underlying image stays fixed.
   const connectionHeight = stacked ? Math.ceil(layoutLabels / Math.max(1, Math.floor(areaWidth / 28))) * 24 : 0;
   const labelTop = 136 + connectionHeight;
-  const height = stacked ? areaHeight + Math.max(300, layoutLabels * 62 + 300) : areaHeight;
+  const height = stacked ? areaHeight + connectionHeight + Math.max(300, layoutLabels * 62 + 300) : areaHeight;
   const density = Math.min(2, globalThis.devicePixelRatio || 1);
   if (canvas.width !== Math.round(displayWidth * density) || canvas.height !== Math.round(height * density)) { canvas.width = Math.round(displayWidth * density); canvas.height = Math.round(height * density); }
   const context = canvas.getContext("2d");
@@ -171,11 +178,11 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
       context.fillText(`Model score ${score.toFixed(2)}`, railX + 44, afterLabel - 6);
     }
   });
-  if (scene.warning) {
+  if (warning) {
     const warningY = railY + connectionHeight + Math.max(175, layoutLabels * 62 + 155);
     context.fillStyle = "#4d3410"; context.fillRect(railX + 10, warningY - 22, railWidth - 20, height - warningY + 12);
     context.fillStyle = "#ffe7a3"; context.font = "bold 17px system-ui";
-    wrapText(context, `! ${scene.warning}`, railX + 20, warningY, railWidth - 40, 24);
+    wrapText(context, `! ${warning}`, railX + 20, warningY, railWidth - 40, 24);
   }
   return { image: rect, width: displayWidth, height };
 }
