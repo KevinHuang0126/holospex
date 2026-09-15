@@ -3,18 +3,21 @@
 .live-feed-controls .setup-field { margin: 0; }
 .live-feed-device { min-width: 220px; max-width: 100%; flex: 1 1 300px; }
 .live-feed-device input[type="url"] { font-size: 16px; }
-.live-feed-status { color: #335c53; }
+.live-feed-status { color: var(--text-muted); }
 .identification-display-controls { margin-top: 16px; align-items: center; }
 .identification-score-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
-.identification-score-toggle input { width: 18px; height: 18px; accent-color: #335c53; }
-.live-feed-preview { overflow: hidden; min-width: 0; border-radius: 12px; background: #10262e; }
-.live-feed-preview > p { margin: 0; padding: 12px 18px; color: #ffe7a3; font-size: 13px; }
+.identification-score-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.live-feed-preview { overflow: hidden; min-width: 0; border-radius: 12px; background: var(--surface); }
+.live-feed-preview > p { margin: 0; padding: 12px 18px; color: var(--warning); font-size: 13px; }
 .uploaded-video-name { flex-basis: 100%; overflow-wrap: anywhere; font-size: 13px; }
 .stream-link-help { flex-basis: 100%; margin: 0; }
-.uploaded-video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; color: #fff; }
+.uploaded-video-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px; color: var(--text); }
 .uploaded-video-controls .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .uploaded-video-speed { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.uploaded-video-speed select { padding: 8px; color: #fff; background: #17353e; border: 1px solid #63818a; border-radius: 6px; font-size: 16px; }
+.uploaded-video-speed select { padding: 8px; color: var(--text); background: var(--surface-raised); border: 1px solid var(--control-border); border-radius: 6px; font-size: 16px; }
 .uploaded-video-timeline { display: grid; gap: 8px; flex: 1 1 240px; min-width: 0; font-size: 13px; }
-.uploaded-video-timeline input { width: 100%; min-width: 0; accent-color: #63c8b5; }
+.uploaded-video-timeline input { width: 100%; min-width: 0; accent-color: var(--accent); }
 @media (max-width: 600px) { .live-feed-device { min-width: 0; flex-basis: 100%; } }
+
+.live-feed-preview { box-shadow: 0 0 0 1px var(--border); }
+.uploaded-video-timeline { font-variant-numeric: tabular-nums; }

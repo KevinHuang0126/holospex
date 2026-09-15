@@ -1,21 +1,21 @@
 .sample-test-app { width: min(1320px, calc(100% - 32px)); }
 .sample-test-app > .device-setup { margin-top: 24px; }
-.overlay-layer-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin: 18px 0; padding: 14px; border: 1px solid #dce5e0; border-radius: 9px; }
+.overlay-layer-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin: 18px 0; padding: 14px; border: 1px solid var(--border); border-radius: 9px; }
 .overlay-layer-controls legend { width: auto; padding: 0 6px; margin: 0; font-size: 13px; }
 .overlay-layer-controls:disabled { opacity: .6; }
 .overlay-opacity { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; min-width: 180px; font-size: 13px; }
-.overlay-opacity input { grid-column: 1 / -1; width: 100%; accent-color: #176f67; }
+.overlay-opacity input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
 .overlay-opacity output { font-variant-numeric: tabular-nums; }
 .sample-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .sample-heading .eyebrow { margin-bottom: 6px; }
 .sample-heading h2 { margin-bottom: 0; }
-.sample-intro { font-size: 14px; color: #536e68; max-width: 850px; }
-.sample-import { padding: 12px 0; border-block: 1px solid #e2e9e5; }
-.sample-import summary { cursor: pointer; color: #176f67; font-size: 13px; font-weight: 600; }
+.sample-intro { font-size: 14px; color: var(--text-muted); max-width: 850px; }
+.sample-import { padding: 12px 0; border-block: 1px solid var(--border); }
+.sample-import summary { cursor: pointer; color: var(--accent); font-size: 13px; font-weight: 600; }
 .sample-status { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; font-size: 12px; }
-.sample-status span { padding: 5px 10px; border-radius: 6px; background: #edf4f0; color: #275b4f; }
+.sample-status span { padding: 5px 10px; border-radius: 6px; background: var(--surface-raised); color: var(--text-muted); }
 .sample-readout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-.sample-readout > div { background: #f4f7f5; border: 1px solid #dce5e0; border-radius: 8px; padding: 12px; min-width: 0; }
+.sample-readout > div { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px; padding: 12px; min-width: 0; }
 .sample-readout h3 { font-size: 13px; margin: 0 0 6px; }
 .sample-readout p { font-size: 12px; margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 600px) { .sample-heading { align-items: start; flex-direction: column; } .sample-readout { grid-template-columns: 1fr; } }

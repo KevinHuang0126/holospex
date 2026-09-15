@@ -1,6 +1,9 @@
 /* Frame warnings can change or disappear without moving playback controls.
    Longer supplied status reasons remain readable by scrolling this area. */
 .notice.video-hud-notice {
+  background: var(--warning-surface);
+  color: var(--warning);
+  border-color: var(--warning);
   box-sizing: border-box;
   line-height: 1.5;
   height: calc(2lh + 32px);
