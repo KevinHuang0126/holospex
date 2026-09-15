@@ -19,9 +19,10 @@ image views, provenance and frontend integration.
 
 ### Open it on a phone
 
-The deployed test site is **https://holospex.vercel.app/mannequin**.
-Its Vercel project remains `holospex-mannequin-phone`. The production domain
-`holospex.vercel.app` is attached to that project and follows future production deployments.
+Kevin's cloud-connected test site is **https://holospex-mu.vercel.app/mannequin**,
+in Vercel project `kevhuang-3216s-projects/holospex`. Its model runs on Cloud Run;
+see [cloud hosting and redeployment](../ml/CLOUD_INFERENCE.md). The older
+`holospex.vercel.app` remains in the other account and was not changed.
 
 The phone needs an HTTPS URL. `localhost` and `127.0.0.1` on a phone refer to
 the phone itself, so the laptop's development URL will not work there.

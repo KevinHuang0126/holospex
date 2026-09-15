@@ -13,14 +13,15 @@ camera input, recording support, and answer export. The **ML package** provides
 real Endoscapes data acquisition,
 preparation, model training, evaluation, and inference exports. See the
 [ML runbook](ml/TRAINING.md) and [measured run results](ml/STATUS.md).
-Trained weights and surgical data remain local; the web lesson still uses
+Trained weights stay outside Git and the public web bundle; surgical data remains
+local and the web lesson still uses
 synthetic fixtures. **Camera identification**, **Upload video** and **Stream link**
 identify anatomy through the built-in connection to Person 1's trained model.
 **Training image AR** and `/samples`
 load prepared train-split stills and exact masks with dataset provenance.
 See the [live-feed and training-reference guide](docs/live-feed.md).
-The connection is implemented; trained weights, runtime hosting, local training
-assets and device validation still need their actual inputs.
+The cloud demo hosts the pinned model on Cloud Run; local training assets and
+device validation still need their actual inputs.
 Reviewed lesson content and glasses integration remain future work.
 
 **Current ML model:** the September 14 weight-decay-0.05 DeepLabV3–ResNet50 checkpoint
@@ -39,9 +40,10 @@ See [checkpoint setup and phone hosting](docs/live-feed.md).
 
 ## Start the browser app
 
-For phone camera testing, open the [deployed identification demo](https://holospex.vercel.app/mannequin)
-in your phone browser and allow camera access. Camera preview is independent
-of the laptop; live identification also needs the configured model host running.
+For phone camera testing, open the [deployed identification demo](https://holospex-mu.vercel.app/mannequin)
+in your phone browser and allow camera access. This deployment uses the selected
+model on Cloud Run and needs no laptop. After inactivity, allow time to start and
+press **Refresh model** if needed. See the [cloud runbook](ml/CLOUD_INFERENCE.md).
 See the [phone setup and redeployment instructions](docs/mannequin-overlay.md#open-it-on-a-phone).
 
 The live camera/mannequin overlay is at **http://127.0.0.1:5174/mannequin**

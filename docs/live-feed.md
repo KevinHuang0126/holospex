@@ -150,6 +150,12 @@ or cross-origin access to the model is needed.
 
 ## Phone deployment
 
+Kevin's [cloud-connected deployment](https://holospex-mu.vercel.app/mannequin)
+uses the pinned epoch-43 model on Cloud Run, with no laptop or tunnel required.
+See the [cloud runbook](../ml/CLOUD_INFERENCE.md) for resources, verification,
+cold-start behavior and redeployment. The instructions below also support
+independently hosted runners.
+
 `npm run build` followed by `npm run prepare:phone` packages the web app and
 separate placement and identification bridge functions. The trained Python
 model runs on its own machine; the Vercel function forwards requests to it.

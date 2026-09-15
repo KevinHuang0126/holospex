@@ -1,6 +1,18 @@
 # ML run record — September 14, 2026
 
-## Current main and selected model
+## Cloud deployment verification
+
+The selected epoch-43 model now runs on Cloud Run (4 vCPU, 8 GiB, concurrency 1,
+minimum 0 / maximum 1) and serves Kevin's
+[Vercel deployment](https://holospex-mu.vercel.app/mannequin). Both direct and
+Vercel-proxied synthetic inference passed the shared schema and exact frame
+identity checks. The browser shows model readiness. Direct requests without the
+token are rejected; the token remains server-side. All 358 ML tests and the web
+checks/build/package passed. These checks establish connectivity, not anatomical
+accuracy or real-device performance. See [CLOUD_INFERENCE.md](CLOUD_INFERENCE.md)
+for deployment identifiers, measured request times and cold-start limits.
+
+## Model promotion before cloud deployment
 
 The user requested the best verified model and all current work on `main` before
 cloud hosting. The live-identification/frontend branch has been integrated.
