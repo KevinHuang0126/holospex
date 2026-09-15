@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { anatomy, type AnatomyId } from "@holospex/contracts";
 import { polygonAnchor } from "../src/overlays/polygonAnchor";
 import { drawHud, type HudScene } from "../src/overlays/drawHud";
 
@@ -50,7 +51,8 @@ test("leaders leave image clipping before crossing letterboxing and hiding label
   for (const width of [360, 960]) {
     const { canvas, calls } = drawing(width);
     const shown = drawHud(canvas, {} as CanvasImageSource, { ...scene, appearance: { showBoundaries: false, fillOpacity: 0 } })!;
-    const leader = calls.findIndex(call => call.name === "lineTo" && Number(call.args[0]) > 100);
+    const leader = calls.findIndex(call => call.name === "lineTo" && (width < 760
+      ? call.args[1] === shown.image.height : call.args[0] === shown.width - 300));
     assert.ok(leader > calls.findIndex(call => call.name === "restore"));
     const anchor = polygonAnchor(concave)!;
     assert.ok(calls.some(call => call.name === "arc" && call.args[2] === 4 && call.args[0] === shown.image.x + anchor.x * shown.image.scale && call.args[1] === shown.image.y + anchor.y * shown.image.scale));
@@ -89,4 +91,35 @@ test("fragmented predictions retain every outline but only label the largest com
   const anchor = polygonAnchor(concave)!;
   assert.ok(calls.some(call => call.name === "arc" && call.args[2] === 4 && call.args[0] === layout.image.x + anchor.x * layout.image.scale && call.args[1] === layout.image.y + anchor.y * layout.image.scale));
   assert.deepEqual(drawHud(canvas, null, { ...scene, structures: [...structures, ...Array.from({ length: 20 }, (_, i) => ({ ...structures[0], instanceId: `speck-${i}` }))] }), layout);
+});
+
+test("every combination of visible anatomy keeps the video, class rows and warning panel fixed", () => {
+  const ids = Object.keys(anatomy) as AnatomyId[];
+  const structures = ids.map(structureId => ({ ...scene.structures[0], structureId, instanceId: structureId }));
+  for (const width of [360, 1200]) {
+    const { canvas, calls } = drawing(width);
+    const render = (items: HudScene["structures"], warning: string | null) => {
+      calls.length = 0;
+      const layout = drawHud(canvas, null, { ...scene, labelSlots: undefined, structures: items, warning });
+      const text = calls.filter(call => call.name === "fillText");
+      const warningStart = text.findIndex(call => String(call.args[0]).startsWith("!"));
+      return { layout, size: [canvas.width, canvas.height],
+        text: warningStart < 0 ? text : text.slice(0, warningStart),
+        badges: calls.filter(call => call.name === "arc" && call.args[2] === 9),
+        panel: calls.filter(call => call.name === "fillRect").at(-1) };
+    };
+    const full = render(structures, "Partial visibility.");
+    for (let mask = 0; mask < 2 ** ids.length; mask++) {
+      const visible = structures.filter((_, index) => mask & (1 << index));
+      const sparse = render(visible, "Low-confidence anatomy is hidden.");
+      assert.deepEqual(sparse.layout, full.layout);
+      assert.deepEqual(sparse.size, full.size);
+      assert.deepEqual(sparse.panel, full.panel, "Warning box must not follow the last visible label");
+      for (const text of sparse.text.filter(call => !String(call.args[0]).startsWith("!"))) {
+        assert.ok(full.text.some(call => JSON.stringify(call) === JSON.stringify(text)), "Visible labels keep their original coordinates");
+      }
+      for (const badge of sparse.badges) assert.ok(full.badges.some(call => JSON.stringify(call) === JSON.stringify(badge)));
+      assert.deepEqual(render(visible, null).layout, full.layout);
+    }
+  }
 });
