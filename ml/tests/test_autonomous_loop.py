@@ -65,6 +65,31 @@ def replication_marker(seed=43, **changes):
 
 
 class CandidateTests(unittest.TestCase):
+    def test_new_replication_group_keeps_queue_until_every_candidate_is_terminal_and_audited(self):
+        unready = []
+        for status in ("SUBMIT_INTENT", "JOB_STATE_PENDING", "JOB_STATE_RUNNING", "JOB_STATE_CANCELLING"):
+            run = full_completed("unresolved", score=0.6)
+            run["state"] = status
+            unready.append(run)
+        for audit in (None, {}, {"verified": False, "foreground_macro_iou": 0.6},
+                      {"verified": True, "foreground_macro_iou": float("nan")}):
+            run = full_completed("unresolved", score=0.6)
+            if audit is None:
+                run.pop("audit")
+                run["inspection_error"] = "Collection failed"
+            else:
+                run["audit"] = audit
+            unready.append(run)
+        for run in unready:
+            with self.subTest(run=run):
+                state = fixture_state()
+                state.update(queue=[replication_marker(), replication_marker(44)],
+                             runs=[full_completed("early", score=0.51), run])
+                queued = copy.deepcopy(state["queue"])
+                self.assertIsNone(loop.choose_next(state, 4000))
+                self.assertEqual(state["queue"], queued)
+                self.assertNotIn("replication_groups", state)
+
     def test_replication_marker_rejects_recipe_overrides_and_invalid_groups_or_seeds(self):
         loop.validate_recipe(replication_marker())
         for changes in ({"lr": 0.1}, {"epochs": 3}, {"replicate_best_full": "../other"},
@@ -198,6 +223,73 @@ class ControllerTests(unittest.TestCase):
     def controller(self, state=None):
         loop.write_json(self.path, state or fixture_state())
         return loop.Controller(self.path)
+
+    def test_replication_barrier_waits_for_later_winner_then_launches_both_seeds_together(self):
+        state = fixture_state()
+        late = full_completed("late", score=0.6, lr=0.0001)
+        late.update(state="JOB_STATE_RUNNING")
+        late.pop("audit")
+        state.update(max_runs=4, queue=[replication_marker(), replication_marker(44)],
+                     runs=[full_completed("early", score=0.51), late])
+        controller = self.controller(state)
+        polls = [0]
+
+        def reconcile(run):
+            if polls[0]:
+                run.update(full_completed("late", score=0.6, lr=0.0001))
+
+        def sleep(seconds):
+            if polls[0] == 0:
+                self.assertEqual(len(controller.state["runs"]), 2)
+                self.assertEqual(controller.state["queue"], state["queue"])
+                self.assertNotIn("replication_groups", controller.state)
+                polls[0] += 1
+            else:
+                raise InterruptedError("fixture stop")
+
+        replies = [json.dumps({"name": f"job/seed{seed}", "state": "JOB_STATE_PENDING"}) for seed in (43, 44)]
+        with patch.object(controller, "reconcile", side_effect=reconcile), \
+                patch.object(loop, "command", side_effect=replies) as cloud, \
+                patch.object(loop.time, "sleep", side_effect=sleep):
+            with self.assertRaisesRegex(InterruptedError, "fixture stop"):
+                controller.run()
+        self.assertEqual(cloud.call_count, 2)
+        self.assertEqual(controller.state["queue"], [])
+        group = controller.state["replication_groups"]["leader-seeds-43-44"]
+        self.assertEqual(group["source_run_name"], "late")
+        repeats = controller.state["runs"][2:]
+        self.assertEqual([run["recipe"]["seed"] for run in repeats], [43, 44])
+        self.assertTrue(all(run["recipe"]["lr"] == 0.0001 and run["state"] == "JOB_STATE_PENDING" for run in repeats))
+        self.assertEqual({run["replication"]["source_recipe_sha256"] for run in repeats}, {group["recipe_sha256"]})
+
+    def test_direct_replication_launch_cannot_bypass_pending_candidate_barrier(self):
+        controller = self.controller()
+        pending = full_completed("late", score=0.6)
+        pending["state"] = "JOB_STATE_RUNNING"
+        controller.state["runs"] = [full_completed("early", score=0.51), pending]
+        before = copy.deepcopy(controller.state)
+        with patch.object(loop, "command") as cloud, self.assertRaisesRegex(ValueError, "terminal candidates"):
+            controller.launch(replication_marker())
+        cloud.assert_not_called()
+        self.assertEqual(controller.state, before)
+        self.assertFalse((controller.root / "jobs").exists())
+
+    def test_replication_records_failed_candidates_without_choosing_them_or_waiting_on_history(self):
+        controller = self.controller()
+        failed = full_completed("failed", score=0.99)
+        failed["state"] = "JOB_STATE_FAILED"
+        historical = full_completed("history", score=0.99)
+        historical.update(historical=True, state="JOB_STATE_RUNNING")
+        controller.state.update(runs=[full_completed("valid", score=0.51), failed, historical],
+                                queue=[replication_marker()])
+        marker = loop.choose_next(controller.state, 4000)
+        resolved, metadata = controller.resolve_replication(marker)
+        self.assertEqual(metadata["source_run_name"], "valid")
+        outcomes = controller.state["replication_groups"][marker["replicate_best_full"]]["candidate_outcomes"]
+        self.assertEqual(outcomes, [
+            {"name": "valid", "state": "JOB_STATE_SUCCEEDED", "foreground_macro_iou": 0.51, "full_recipe_eligible": True},
+            {"name": "failed", "state": "JOB_STATE_FAILED", "foreground_macro_iou": None, "full_recipe_eligible": False},
+        ])
 
     def test_replication_resolves_at_launch_and_persists_frozen_group_before_submission(self):
         controller = self.controller()

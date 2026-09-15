@@ -8,6 +8,7 @@ cannot compare a coordinate to another property of its containing frame.
 
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -44,13 +45,40 @@ def _check_finite(value: Any, path: str = "$") -> None:
             _check_finite(child, f"{path}[{index}]")
 
 
-def validate_frame_result(data: Any, schema_path: Path | None = None) -> None:
-    """Raise ContractError for invalid schema or cross-field semantics."""
-    _check_finite(data)
-    schema = load_json(schema_path or default_schema_path())
+def _load_validator(schema_path: Path) -> Any:
+    schema = load_json(schema_path)
     validator_class = validator_for(schema)
     validator_class.check_schema(schema)
-    errors = list(validator_class(schema).iter_errors(data))
+    return validator_class(schema)
+
+
+@lru_cache(maxsize=8)
+def _cached_validator(schema_path: Path, identity: tuple[int, ...]) -> Any:
+    # The file identity is part of the key, including inode for atomic replaces
+    # and ctime for same-size edits that preserve the modification timestamp.
+    return _load_validator(schema_path)
+
+
+def _get_validator(schema_path: Path | None, *, use_cache: bool) -> Any:
+    path = (schema_path or default_schema_path()).resolve()
+    if not use_cache:
+        return _load_validator(path)
+    stat = path.stat()
+    identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+    return _cached_validator(path, identity)
+
+
+def validate_frame_result(
+    data: Any, schema_path: Path | None = None, *, use_cache: bool = True,
+) -> None:
+    """Raise ContractError for invalid schema or cross-field semantics.
+
+    Cache at most eight checked validators, invalidating on schema file edits
+    or replacement. ``use_cache=False`` keeps the same validation behavior and
+    reloads/checks the schema for each frame, useful for latency comparisons.
+    """
+    _check_finite(data)
+    errors = list(_get_validator(schema_path, use_cache=use_cache).iter_errors(data))
     if errors:
         messages = []
         for error in errors:
@@ -78,7 +106,9 @@ def validate_frame_result(data: Any, schema_path: Path | None = None) -> None:
             raise ContractError("$.propagatedFromTimestampMs: must precede timestampMs")
 
 
-def validate_export(data: Any, schema_path: Path | None = None) -> int:
+def validate_export(
+    data: Any, schema_path: Path | None = None, *, use_cache: bool = True,
+) -> int:
     """Validate a single result or a JSON array of results; return frame count.
 
     A bundle is deliberately just an array for now. It may contain multiple
@@ -87,7 +117,7 @@ def validate_export(data: Any, schema_path: Path | None = None) -> int:
     frames = data if isinstance(data, list) else [data]
     for index, frame in enumerate(frames):
         try:
-            validate_frame_result(frame, schema_path)
+            validate_frame_result(frame, schema_path, use_cache=use_cache)
         except ContractError as error:
             if isinstance(data, list):
                 raise ContractError(f"Bundle frame {index}: {error}") from error

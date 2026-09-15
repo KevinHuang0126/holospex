@@ -1,8 +1,14 @@
 from copy import deepcopy
+import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from jsonschema.exceptions import SchemaError
+
+from holospex_ml import validation
 from holospex_ml.adapters import FrameInput, UnconfiguredAdapter
 from holospex_ml.cli import main
 from holospex_ml.validation import ContractError, load_json, validate_export, validate_frame_result
@@ -85,6 +91,89 @@ class ContractTests(unittest.TestCase):
     def test_bundle_reports_failed_frame(self) -> None:
         with self.assertRaisesRegex(ContractError, "Bundle frame 1"):
             validate_export([prediction(), {}])
+
+    def test_cached_and_uncached_validation_have_identical_semantics(self) -> None:
+        cases = [prediction()]
+        for change in (
+            lambda frame: frame.pop("model"),
+            lambda frame: frame.update(timestampMs=float("nan")),
+            lambda frame: frame["structures"][0]["polygon"][1].__setitem__(0, 321),
+            lambda frame: frame["structures"].append(deepcopy(frame["structures"][0])),
+            lambda frame: frame.update(source="propagated_prediction", propagatedFromTimestampMs=1000),
+            lambda frame: frame.update(status="error", statusReason="Inference failed"),
+        ):
+            frame = prediction()
+            change(frame)
+            cases.append(frame)
+        for index, frame in enumerate(cases):
+            outcomes = []
+            for use_cache in (False, True):
+                with self.subTest(case=index, use_cache=use_cache):
+                    try:
+                        validate_frame_result(frame, use_cache=use_cache)
+                        outcomes.append(None)
+                    except ContractError as error:
+                        outcomes.append(str(error))
+            self.assertEqual(outcomes[0], outcomes[1])
+            if index:
+                self.assertIsNotNone(outcomes[0])
+            else:
+                self.assertIsNone(outcomes[0])
+        for use_cache in (False, True):
+            with self.assertRaisesRegex(ContractError, "Bundle frame 1"):
+                validate_export([prediction(), {}], use_cache=use_cache)
+
+    def test_validator_reuses_schema_and_can_bypass_cache_for_benchmarks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            schema_path = Path(directory) / "schema.json"
+            schema_path.write_bytes(validation.default_schema_path().read_bytes())
+            with patch.object(validation, "load_json", wraps=load_json) as load:
+                validate_export([prediction(), prediction()], schema_path)
+                self.assertEqual(load.call_count, 1)
+                validate_export([prediction(), prediction()], schema_path, use_cache=False)
+                self.assertEqual(load.call_count, 3)
+
+    def test_schema_cache_tracks_explicit_paths_edits_and_atomic_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            schema_path = Path(directory) / "schema.json"
+            other_path = Path(directory) / "other.json"
+            schema = load_json(validation.default_schema_path())
+            schema["properties"]["mediaId"]["const"] = "test-only"
+            accepted = json.dumps(schema)
+            schema["properties"]["mediaId"]["const"] = "different"
+            rejected = json.dumps(schema)
+            self.assertEqual(len(accepted), len(rejected))
+            schema_path.write_text(accepted)
+            other_path.write_text(rejected)
+            validate_frame_result(prediction(), schema_path)
+            with self.assertRaises(ContractError):
+                validate_frame_result(prediction(), other_path)
+
+            original_stat = schema_path.stat()
+            schema_path.write_text(rejected)
+            os.utime(schema_path, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+            with self.assertRaises(ContractError):
+                validate_frame_result(prediction(), schema_path)
+
+            replacement = Path(directory) / "replacement.json"
+            replacement.write_text(accepted)
+            os.utime(replacement, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+            replacement.replace(schema_path)
+            validate_frame_result(prediction(), schema_path)
+
+            schema_path.unlink()
+            with self.assertRaises(FileNotFoundError):
+                validate_frame_result(prediction(), schema_path)
+
+    def test_cache_does_not_hide_an_invalid_schema_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            schema_path = Path(directory) / "schema.json"
+            schema_path.write_bytes(validation.default_schema_path().read_bytes())
+            validate_frame_result(prediction(), schema_path)
+            schema_path.write_text('{"type": "invalid-type"}')
+            for use_cache in (True, False):
+                with self.assertRaises(SchemaError):
+                    validate_frame_result(prediction(), schema_path, use_cache=use_cache)
 
     def test_cli_export_is_valid_and_will_not_replace_a_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

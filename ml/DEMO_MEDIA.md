@@ -1,5 +1,10 @@
 # Public surgical video for the ML handoff
 
+The selected live model is now the 53.3060% checkpoint in [CURRENT_MODEL.md](CURRENT_MODEL.md).
+The precomputed exports below retain the older batch-002 identity; they were not
+regenerated during model promotion. Use live identification for the selected model,
+or export fresh predictions explicitly. Do not relabel these existing files.
+
 ## Current Gupta clip and model
 
 The current anatomy-visible excerpt is
@@ -11,8 +16,8 @@ Video 1, doi:10.14701/ahbps.22-064. Retain author credit and CC BY-NC 4.0 terms.
 [Exact local provenance](outputs/candidate-cvs-video/media-provenance.json)
 records source URLs, transformations, licenses and hashes.
 
-The current [predictions.json](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
-uses the promoted batch-002 seed-42 checkpoint, version
+The existing [predictions.json](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
+uses the previous batch-002 seed-42 checkpoint, version
 `2026-09-14T04:29:29.757933Z-epoch-34`, and covers all 1,056 frames.
 Decoded-frame identities, raw masks and the actual frontend parser/matcher
 passed verification. Its media ID is

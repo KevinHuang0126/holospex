@@ -1,9 +1,15 @@
 # ML work plan and commands
 
-For inference with the best verified local model, pass
-`--checkpoint ml/weights/current/best.pt`. The [current model record](CURRENT_MODEL.md)
-and checksum-bound selection receipt identify the actual checkpoint. Historical
-training commands below retain their original experiment paths.
+For inference, use `--checkpoint ml/weights/current/best.pt`. The selected model
+is the **53.3060% native foreground IoU** weight-decay-0.05 seed-42 winner, now
+pinned by the live runner and installation helper. See [CURRENT_MODEL.md](CURRENT_MODEL.md)
+for verified retrieval and upgrades; Git does not carry the checkpoint bytes.
+Existing precomputed video JSON retains its original batch-002 model identity.
+
+The [accuracy follow-ups](FOLLOWUP_ITERATION.md) found this checkpoint, and
+the [matched regularization tests](REGULARIZATION_TESTS.md) did not improve it.
+Those guides describe historical experiment windows; the model was promoted
+subsequently at the user's request before cloud hosting.
 
 For the bounded adaptive Vertex experiment controller, immutable source
 packaging, verified result reports, and current optimization options, see

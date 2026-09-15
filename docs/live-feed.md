@@ -100,8 +100,8 @@ It does not retrain, download a checkpoint, use OpenAI to identify anatomy,
 or retrieve a similar training annotation as a live prediction.
 
 Person 1's September 14 [promoted model](../ml/CURRENT_MODEL.md) is
-DeepLabV3–ResNet50, batch-002 seed 42, version
-`2026-09-14T04:29:29.757933Z-epoch-34`. The live runner defaults to
+DeepLabV3–ResNet50, weight decay 0.05 / seed 42, version
+`2026-09-14T16:39:12.476979Z-epoch-43`. The live runner defaults to
 `ml/weights/current/best.pt`, verifies the published byte count and SHA-256,
 and uses Person 1's documented 0.5 confidence cutoff. This replaces the
 historical `small-004-resolution` selection. Pulling Git updates the code and
@@ -270,7 +270,7 @@ stall clears the view. Stream interruptions, dimension changes and backward
 media timestamps invalidate old work. Browsers without video-frame callbacks
 support preview only. Actual throughput and alignment need device validation.
 
-The promoted checkpoint was installed and strictly loaded on the Windows CPU
+The previous batch-002 checkpoint was installed and strictly loaded on the Windows CPU
 host on September 14. Nine HTTP predictions using the existing training
 reference image at 854 x 480, 1280 x 720 and 1920 x 1080 took 1,540–1,937 ms.
 Three further 1280 x 720 requests through Vite's `/api/identify` took
@@ -281,7 +281,7 @@ the six-second bound leaves room for CPU inference, network transit and display
 of the matching captured image. Actual updates on this host will be much slower
 than the five-captures-per-second ceiling.
 
-The September 14 production deployment at `https://holospex.vercel.app/mannequin`
+The historical September 14 production deployment at `https://holospex.vercel.app/mannequin`
 was also checked through Vercel and the authenticated Cloudflare tunnel. Three
 generated 1280 x 720 gray-grid images returned canonical model results with
 matching frame identities in 1,620–1,814 ms. All returned zero structures.
@@ -315,8 +315,8 @@ The polygon exporter also withholds components with holes, non-simple
 boundaries, or contour area below 64 captured pixels. Missing labels do not
 necessarily mean the raw model predicted no anatomy.
 
-The [current model record](../ml/CURRENT_MODEL.md) reports 52.8251% six-class
-foreground IoU and 35.7053% small-anatomy IoU on its fixed 75-frame native
+The [current model record](../ml/CURRENT_MODEL.md) reports 53.3060% six-class
+foreground IoU and 36.4221% small-anatomy IoU on its fixed 75-frame native
 validation set. Those are recorded validation metrics, not measured accuracy
 on this camera or uploaded clip. No held-out image/mask set is installed in
 this checkout for a fresh comparison. The pointer and inspection changes have

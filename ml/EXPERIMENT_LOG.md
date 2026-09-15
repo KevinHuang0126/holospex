@@ -1196,3 +1196,338 @@ accuracy on this public clip. Current model, status, review-batch and demo-media
 documentation now point to the completed handoff. Both cloud jobs and the
 controller are stopped; no further training was launched. The batch's best
 verified foreground IoU remains 52.8251%, below the 75% target.
+
+## September 14, 2026 — accuracy follow-up preparation
+
+The lead requested autonomous follow-ups based on the experiment history. A new
+[finite comparison](FOLLOWUP_ITERATION.md) is prepared; the new compute limit is
+awaiting the lead's response. Neither completed historical window is reopened,
+and **no new job has launched**. A fresh cloud query found no active Vertex jobs.
+
+The current checkpoint and both batch002 results were re-audited, including
+saved confusion arithmetic and all 36 completion-artifact hashes. The baseline
+remains 52.8251% native foreground IoU, 35.7053% pooled small IoU and 32.2752%
+equal-case small IoU. Source, base-data and reviewed-data archive hashes match
+their existing private cloud object sizes and MD5 metadata.
+
+The proposed initial pair changes only weight decay (0.01 to 0.05) or main-head
+Lovasz weight (0.25 to 0.5) from the 53-epoch batch002 seed-42 recipe. The first
+tests the measured late overfitting; the second extends the only successful
+matched MoCo objective change. Triangle/background false positives and
+small-anatomy class/case tradeoffs remain explicit decision criteria. The proposed
+four-launch, two-hour cap reserves two full-schedule seed repeats after both
+initial candidates are independently audited. The absolute UTC start/deadline
+will be fixed in a new state only after the compute limit is supplied.
+
+Preparation also fixed a controller race: a new repeat group now waits for all
+launched candidates to become terminal and all successes to pass audit before
+freezing the winning recipe. Its two seed members can then run concurrently.
+Selection provenance records failed/ineligible candidates explicitly. All 44
+controller tests and the full 342-test shared-workspace ML suite pass. The
+existing immutable worker source is reused; unrelated inference/latency edits
+are preserved. See the [preflight artifacts](outputs/followups-20260914-1509/preflight/)
+and [non-runnable launch plan](outputs/followups-20260914-1509/launch-plan.json).
+
+
+**Approved follow-up window, September 14 at 16:34:19 UTC:** The user approved
+up to two hours, four Spot A100 runs and two concurrent workers, including
+complete evaluation. A new state fixes the deadline at **18:34:19 UTC** and
+reuses the verified existing source/data/backbone bundles. The controller is
+running; its first recipes retain the frozen 53-epoch comparisons above.
+The repeat-group barrier will wait for both candidate outcomes before selecting
+the recipe for seeds 43 and 44. A fresh prelaunch query found no active jobs.
+See [state](outputs/followups-20260914-1509/state.json) and
+[event log](outputs/followups-20260914-1509/events.jsonl). Submission alone does
+not establish training completion or improved accuracy.
+
+
+**Workers confirmed, 16:52 UTC:** Both initial jobs started at 16:38:24 UTC
+and live logs show optimization beyond epoch 28/53, about 26 seconds per epoch.
+Strong decay job: `9068226144402145280`; stronger Lovasz job:
+`3907100971435556864`. Their source/data/backbone references and each single
+intended parameter change match the approved plan. Logs use Cloud Logging's
+`ml_job` resource; an earlier narrower resource filter missed the worker logs.
+Observed epoch scores use the input grid and are not yet native-grid results.
+
+
+**First follow-up result audited, 2026-09-14T17:18:46.863196+00:00:** Stronger weight decay
+(0.05 versus 0.01; every other recipe field fixed) completed all 53 epochs,
+selected epoch 43, and improved native foreground IoU
+**52.8251% → 53.3060%
+(+0.4809 points)**.
+Pooled small IoU is 36.4221% and equal-case small IoU
+is 32.8865%. The native confusion audit verifies
+the fixed 75-image evaluation and completed schedule.
+Job `9068226144402145280`; checkpoint SHA-256
+`9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b`.
+
+Triangle precision improves from 35.4133% to 39.3667%, and artery IoU increases,
+but duct, plate and gallbladder IoU fall slightly. This is one seed; the second
+candidate is still being collected before the repeat group is selected.
+[First-result report](outputs/followups-20260914-1509/reports/first-result/RESULTS.md).
+
+
+**Initial pair complete and repeats launched, 17:21 UTC:** Stronger Lovasz
+(weight 0.5 versus 0.25) completed all 53 epochs, selected epoch 32,
+and reached **52.4804%** native foreground IoU
+(-0.3447 points versus baseline).
+Small pooled IoU is 35.3664%, equal-case small
+IoU is 33.0491%. The latter improves while the
+primary and pooled-small measures regress. Checkpoint SHA-256
+`b13445dad9a351213dd8c8edcc18acfa80481bedffc04cd57d337092fb9c41d1`; job `3907100971435556864`.
+
+After both full results passed native-grid audits, the controller froze the
+stronger-weight-decay recipe from run001 for group
+`followup-full-seeds-43-44` at 2026-09-14T17:21:31.030896+00:00.
+Recipe SHA-256 `226aa80aab2260162e191597171009cc7bd56c4478886fa16f574e9ed8c2466d`.
+The final two authorized launches preserve its full 53-epoch schedule and every
+training/data/source setting, changing only seed and execution identity:
+seed 43 job `2444838467423698944`, seed 44 job `6214351355532804096`.
+All four launch slots are consumed. The original 18:34:19 UTC deadline remains
+fixed. Both initial jobs succeeded at 17:03:36 UTC; collection/audits finished
+at 17:18:46 and 17:21:31 UTC. No new checkpoint has replaced the demo model.
+[Initial-pair report](outputs/followups-20260914-1509/reports/initial-pair/RESULTS.md).
+
+
+## September 14 — follow-up window closed and verified
+
+All four jobs succeeded, completing 212/212 epochs and 43,248 optimizer updates. All 72 completion artifacts, both checkpoint files per run, native confusion metrics and live TRAIN/VAL fingerprints passed independent audits. The controller closed at **17:59:46 UTC** as `experiment_batch_complete`, before its 18:34:19 deadline. Its process and bound keep-awake helper exited; all four cloud jobs were confirmed terminal. No cancellation or further launch was needed.
+
+| Recipe / seed | Selected / completed | Native foreground IoU | Small pooled | Small equal-case |
+| --- | --- | ---: | ---: | ---: |
+| WD 0.05 / 42 | 43 / 53 | 53.3060% | 36.4221% | 32.8865% |
+| Lovasz 0.5 / 42 | 32 / 53 | 52.4804% | 35.3664% | 33.0491% |
+| WD 0.05 / 43 | 38 / 53 | 52.8260% | 35.6034% | 31.9369% |
+| WD 0.05 / 44 | 40 / 53 | 51.4790% | 33.7408% | 31.2816% |
+
+The repeat at seed 43 selected epoch 38/53 and improved its matched baseline from 51.9172% to 52.8260% (+0.9088 points). Seed 44 selected epoch 40/53 and scored 51.4790%; it has no same-data control. Both repeat recipes exactly match run001 except seed/execution metadata.
+
+- Seed 43, job `2444838467423698944`, checkpoint SHA-256 `73596a291969d65c1a708a50c63d6063b07eba03fa02d08f1885c30556d40816`.
+- Seed 44, job `6214351355532804096`, checkpoint SHA-256 `609a09bbabeb5c3fb6bca62aa508d1f5ca8c34815013f9eefaaac10f44c37ae9`.
+
+The winning recipe is **weight decay 0.05**, with the original 0.25 Lovasz term.
+The best checkpoint scores **53.3060%**, **+0.4809 points** over the prior best.
+Across matched seeds 42/43, mean gains are **+0.6949 foreground**, **+0.9733 small
+pooled**, and **+0.5633 small equal-case** points. Its three-seed foreground mean
+is 52.5370%, sample SD 0.9472 points, range 51.4790–53.3060%. This checks seed
+variation and does not establish statistical significance. The 75% target
+remains unmet, and no test inference was performed.
+
+The best seed improves artery/triangle IoU by 2.0770/3.1528 points but loses
+1.4733 plate IoU and 7.5970 plate recall points. Mean matched triangle IoU gains
+3.0239 points, artery gains 1.1399 and plate loses 0.2963. Some validation cases
+regress. Higher Lovasz was rejected on the primary metric despite an equal-case
+gain. Next, complete the missing weight-decay-0.01 seed-44 control on the same
+407-image data and 53-epoch schedule; then test 0.025 versus 0.05 decay across
+matched seeds if supported. No additional training is authorized by this note.
+
+The best research checkpoint remains at
+`ml/outputs/followups-20260914-1509/results/followup-20260914-1509-001-moco-wd005/train/best.pt`,
+SHA-256 `9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b`.
+Strict CPU loading passed; the selected demo checkpoint and video exports were
+preserved. Prelaunch checks passed 44 controller tests and 342 full ML tests.
+The controller race fix is the only tracked execution-code change from this
+follow-up work; the immutable cloud training source was unchanged.
+
+[Final report](outputs/followups-20260914-1509/reports/final/RESULTS.md),
+[comparison chart](outputs/followups-20260914-1509/reports/final/comparison.png),
+[independent aggregate audit](outputs/followups-20260914-1509/independent-result-audits/window-summary.json),
+[closure verification](outputs/followups-20260914-1509/closure-verification.json)
+and [run guide](FOLLOWUP_ITERATION.md) provide the handoff. Charts were visually
+checked. Final report rendering and local load verification occurred after
+controller closure; neither extended cloud compute or the training deadline.
+Historical operator notes above no longer describe active work.
+
+
+## September 14 — requested matched regularization tests, launch blocked
+
+The user requested the previously recommended seed-44 control and intermediate
+weight-decay tests. Four concrete 53-epoch recipes are prepared: weight decay
+0.01 at seed 44 and 0.025 at seeds 42/43/44. These complete a three-by-three
+matched comparison using five existing controls on the same 407-image data.
+All five reference runs were re-audited and all three reused source/data bundles
+rehash correctly. The complete local ML suite was rerun: **342 tests passed**.
+
+Automatic approval review rejected the cloud controller launch because the new
+proposed cap—two hours, four Spot A100 jobs and two concurrent workers—requires
+explicit user approval. **No new job or controller started.** The rejected
+proposal's state is marked `launch_blocked`, with no active start/deadline; prior
+completed windows remain closed. A later approval will create a fresh uniquely
+named state rather than extending or restarting a completed or rejected window.
+See the [concrete plan](REGULARIZATION_TESTS.md) and
+[event record](outputs/regularization-20260914-1930/events.jsonl).
+
+
+**Explicit approval and new launch, September 14 at 19:45:36 UTC:** The user
+said "i give you approval" to the concrete two-hour, four-Spot-A100, two-worker
+budget. A fresh state under `ml/outputs/regularization-20260914-1945/` fixes the
+absolute deadline at **21:45:36 UTC**. The rejected proposal is preserved and
+remains inactive; no existing deadline was extended. The controller is now
+running the predeclared seed-44 baseline and weight-decay-0.025 seeds 42/43/44,
+all 53 epochs on the identical 407-image data. Initialization, worker source,
+loss, optimizer and holdout identities remain frozen. All four recipes were
+validated; source/data bundle hashes and tested controller identity matched.
+No extra uploads or dataset acquisition are needed.
+
+The [approved state](outputs/regularization-20260914-1945/state.json),
+[event log](outputs/regularization-20260914-1945/events.jsonl) and
+[run guide](REGULARIZATION_TESTS.md) preserve launch identities and the stopping
+rule. Checkpoints and artifact audits will be collected before claiming a score.
+
+
+**Optimization confirmed, 19:50 UTC:** Both initial workers passed the pinned
+runtime and began full training. Seed-44 control job `1001962552432787456` and
+intermediate seed-42 job `2274229447164952576` completed initial epochs, with
+steady epoch duration near 27 seconds. The independent launch audit confirmed
+53-epoch schedules, 3,300-second per-run training caps, exact single-parameter
+comparisons and matching live TRAIN/VAL fingerprints. Neither job has a final
+native-grid result yet; the original 21:45:36 UTC deadline remains fixed.
+
+
+**Missing seed-44 control audited, 20:21 UTC:** Weight decay 0.01 completed
+all 53 epochs, selected epoch 25, and reached
+**51.6575% native foreground IoU**,
+34.0630% pooled small IoU and
+29.8022% equal-case small IoU.
+Job `1001962552432787456`; checkpoint SHA-256
+`135efc4cdc3decc7c65881cfa9838418288535b6c0a30fbb5f9cea5c663916c7`. The completed weight-decay-0.05 seed-44
+result is 51.4790%, a
+-0.1785-point
+change versus this new matched control. Thus stronger decay improves the primary
+metric in two of three seeds, not all three. Its equal-case small metric does
+improve in the third seed. All three matched pairs will be included in the final
+mean and variation report. The first intermediate result is still collecting.
+
+
+**Intermediate seed 42 audited and final pair launched, 20:23 UTC:** Weight
+decay 0.025 completed all 53 epochs, selected epoch 34, and
+scored **51.9910% native foreground IoU**,
+34.6097% pooled small and
+31.3820% equal-case small IoU. This is below the
+matched 0.01 and 0.05 seed-42 controls on all three headline metrics.
+Job `2274229447164952576`; checkpoint SHA-256
+`324b482e7dd4b0c71036a9e93c1a12fe48d0c3bae78b3c4d5b350b54e1449dd8`. The two completed new runs passed independent
+checks of all 36 artifacts, full schedules and unchanged live TRAIN/VAL identities.
+
+The final two launches retain the predeclared 0.025 recipe and full 53 epochs
+for seeds 43 and 44: jobs `1101534325444182016` and `4504003843922591744`.
+Completing this fixed seed group will measure whether the first decline repeats;
+the recipe is not changed after seeing seed 42. All four launch slots are now
+used, and the 21:45:36 UTC deadline remains fixed.
+
+With the new seed-44 control, 0.05 versus 0.01 now has mean paired gains across
+all three seeds of +0.4037 foreground, +0.5415 pooled small and +0.8686
+equal-case small points. The third seed regresses on foreground and pooled
+small despite its equal-case gain. The
+[interim report](outputs/regularization-20260914-1945/reports/control-complete/RESULTS.md)
+contains all currently audited results; the final intermediate seeds remain pending.
+
+
+## September 14 — matched regularization tests completed
+
+**Final seed results and closure, 21:35:55 UTC:** All four new jobs succeeded, completing 212/212 epochs and 43,248 optimizer updates. All 72 completion artifacts, both checkpoints per run, exact configs, live TRAIN/VAL fingerprints and native confusion metrics passed independent audits.
+
+| Recipe / seed | Selected / completed | Native foreground IoU | Small pooled | Small equal-case |
+| --- | --- | ---: | ---: | ---: |
+| WD 0.01 / 44 | 25 / 53 | 51.6575% | 34.0630% | 29.8022% |
+| WD 0.025 / 42 | 34 / 53 | 51.9910% | 34.6097% | 31.3820% |
+| WD 0.025 / 43 | 42 / 53 | 52.2905% | 34.8366% | 32.1205% |
+| WD 0.025 / 44 | 41 / 53 | 51.4658% | 33.7259% | 30.8050% |
+
+The final two identities are:
+- `reg-20260914-1945-003-middle-wd0025-s43`, job `1101534325444182016`, checkpoint SHA-256 `539222d1fcb35a06a9d6cdc3d1baec728990f2fb67bbb399553a26e9b10d3621`.
+- `reg-20260914-1945-004-middle-wd0025-s44`, job `4504003843922591744`, checkpoint SHA-256 `e403594d9587cee7b35846ce7f0ce1b371624fd7a9570afdd63274e187448ba4`.
+
+The intermediate 0.025 recipe loses foreground IoU to 0.05 in every matched
+seed. Across seeds 42/43/44, mean foreground IoU is 52.1333% (SD 0.6130 points)
+at 0.01, 51.9158% (SD 0.4175) at 0.025 and 52.5370% (SD 0.9472) at 0.05.
+Intermediate-minus-0.05 mean changes are −0.6213 foreground, −0.8647 pooled
+small and −0.5991 equal-case small points; mean plate IoU falls 1.8288 points.
+The hypothesized plate recovery was not supported. The new tests improve the
+comparison evidence, not the best checkpoint.
+
+With all three controls now present, 0.05-versus-0.01 mean gains are +0.4037
+foreground, +0.5415 pooled small and +0.8686 equal-case small points. Seed 44
+regresses 0.1785 foreground points. Mean triangle IoU gains 2.1264 points;
+plate IoU is nearly flat (−0.0263), with precision +2.2718 and recall −4.5402
+points. Case regressions and seed variation remain material. Repeated
+validation use and three seeds do not establish significance or clinical
+validity. The 75% target remains unmet. No test inference was performed.
+
+All training ended by **20:50:41 UTC**, independently confirmed in the cloud.
+A local checkpoint download stalled; after the agent session resumed, the
+owned downloader and verified orphaned descendants were removed. The existing
+controller completed bounded collection and stopped at **21:35:55 UTC** as
+`experiment_batch_complete`, before the unchanged 21:45:36 deadline. Its
+process, initial/rebound keep-awake helpers and recovered download workers
+are confirmed absent. No new training job, cancellation or deadline extension
+was necessary. The recovery event is retained for future downloader hardening.
+
+The best research checkpoint remains
+`ml/outputs/followups-20260914-1509/results/followup-20260914-1509-001-moco-wd005/train/best.pt`,
+**53.3060% native foreground IoU**, SHA-256
+`9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b`.
+All four new checkpoints and this research leader passed strict CPU loading.
+The selected demo SHA remains
+`b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911`.
+The local ML suite passed 342 tests in preflight; no execution code changed in
+this approved window. All three final charts were visually checked.
+
+The next supported experiment is a bounded native-grid checkpoint-selection
+audit of twelve predeclared WD 0.05 snapshots: seed 42 epochs 43/51/47/53,
+seed 43 epochs 38/39/42/53, and seed 44 epochs 40/41/35/53. Close input-grid
+rankings may reverse at native resolution, although observed grid shifts are
+small and do not promise a substantial gain. All twelve coherent records and
+exact object metadata are available; six weight files are already local and
+six alternates total 1,010,111,778 cloud bytes. This availability check did
+not download alternate weights or run inference. Reusing three audited best
+results leaves 675 frame forwards across nine checkpoints. No further training
+or audit compute is authorized by this historical operator note.
+
+[Final report](outputs/regularization-20260914-1945/reports/final/RESULTS.md),
+[comparison chart](outputs/regularization-20260914-1945/reports/final/native-score-grid.png),
+[independent summary](outputs/regularization-20260914-1945/independent-result-audits/comparison-summary.json),
+[closure receipt](outputs/regularization-20260914-1945/closure-verification.json),
+[snapshot availability](outputs/regularization-20260914-1945/preflight/selection-snapshot-availability.json)
+and [completed run guide](REGULARIZATION_TESTS.md) provide the reproducible
+handoff. Earlier active-window notes and interim reports are historical.
+
+
+## September 14 main integration and explicit model promotion
+
+The user requested the best model on the branch and an up-to-date `main` before
+cloud hosting. Integrated the four commits through `dc_AR_HUD` commit `1b890b0`,
+including the live camera/video/stream client and Python identification runner,
+and preserved the local experiment-controller and inference/benchmark work.
+No new training or cloud deployment was launched.
+
+A fresh artifact/native-grid audit ranked all 33 available collected runs. The
+leader remains `followup-20260914-1509-001-moco-wd005`: AdamW weight decay 0.05,
+seed 42, MoCo ResNet50, balanced CE + 0.25 Lovasz, 407 training images, input
+672 × 384; selected epoch 43 / completed 53. The source Vertex job is
+`9068226144402145280`; checkpoint SHA-256 is
+`9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b`.
+All 18 completion artifacts passed size/SHA verification. The fixed 75-image,
+ten-case validation identities and pooled/per-case confusion metrics passed
+verification. Strict CPU loading succeeded. Retained epoch snapshots were not
+re-evaluated, and no test split was used.
+
+Promoted the checkpoint to `ml/weights/current/best.pt` and updated the installer
+and live-runner pin. Native foreground IoU is 53.3060% versus 52.8251% previously
+(+0.4809 pp), pooled small IoU 36.4221%, equal-case small IoU 32.8865%. Plate IoU
+regresses 1.4733 pp and plate recall 7.5970 pp. The previous checkpoint/receipt
+are preserved under `ml/weights/previous/b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911/`.
+The complete portable selection, ranking and retrieval receipt are tracked in
+[CURRENT_MODEL_SELECTION.json](CURRENT_MODEL_SELECTION.json). Existing video
+exports and deployed hosts retain the previous model identity until updated.
+
+Validation: 355 ML tests, 17 preparation-script tests, `npm run check`,
+`npm run build`, `npm run prepare:phone` and the default `model:prepare` all pass.
+Adjusted three imported path assertions to compare resolved paths on macOS;
+optional benchmark hardware metadata now tolerates OS access denial.
+A local browser showed model readiness and processed an uploaded synthetic
+gray-grid clip. A separate HTTP check through the Vite bridge returned the
+pinned model version and a canonical, identity-matched result with HTTP 200.
+This verifies local integration only, not cloud latency or anatomical accuracy.
+Checks and work-preservation snapshots are under
+`ml/outputs/main-sync-20260914-235238/`.

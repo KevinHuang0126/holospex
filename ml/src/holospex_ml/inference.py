@@ -8,6 +8,7 @@ anatomical correctness or a CVS assessment.
 
 from pathlib import Path
 import json
+from time import perf_counter
 
 import cv2
 import numpy as np
@@ -120,10 +121,31 @@ def masks_to_structures(probabilities, classes, threshold=0.5, min_area=64):
     return structures, labels, withheld
 
 
+def _synchronize_device(device):
+    """Wait for device work only when explicitly collecting stage timings."""
+    if device.type == 'cuda':
+        torch.cuda.synchronize(device)
+    elif device.type == 'mps':
+        torch.mps.synchronize()
+
+
+def _record_stage(timings, name, started, device=None):
+    if device is not None:
+        _synchronize_device(device)
+    finished = perf_counter()
+    timings[name] = (finished - started) * 1000
+    return finished
+
+
 class SegmentationAdapter:
-    def __init__(self, checkpoint_path: Path, device='auto', threshold=0.5, min_area=64):
+    def __init__(self, checkpoint_path: Path, device='auto', threshold=0.5, min_area=64,
+                 *, run_auxiliary_head=False):
         from .model import load_checkpoint
         self.model, self.checkpoint = load_checkpoint(checkpoint_path, device)
+        # Load every checkpoint tensor strictly before removing the unused
+        # training head. Keep the full head available for baseline comparisons.
+        if not run_auxiliary_head:
+            self.model.aux_classifier = None
         self.device = next(self.model.parameters()).device
         self.threshold = threshold
         self.min_area = min_area
@@ -135,8 +157,15 @@ class SegmentationAdapter:
             rgb = np.array(image.convert('RGB'))
         return self.predict_rgb_details(frame, rgb)
 
-    def predict_rgb_details(self, frame: FrameInput, rgb):
-        """Infer an original-resolution decoded RGB frame without JPEG files."""
+    def predict_rgb_details(self, frame: FrameInput, rgb, *, timings=None):
+        """Infer a decoded RGB frame, optionally recording synchronized stage ms.
+
+        Timings exclude decoding and caller work. Profiling waits at accelerator
+        boundaries; normal inference adds no explicit synchronization calls.
+        """
+        if timings is not None:
+            _synchronize_device(self.device)
+            started = perf_counter()
         rgb = np.asarray(rgb)
         if rgb.dtype != np.uint8 or rgb.shape != (frame.height, frame.width, 3):
             raise ValueError('RGB input must be uint8 H×W×3 matching frame dimensions')
@@ -147,12 +176,24 @@ class SegmentationAdapter:
         normalization = self.checkpoint['normalization']
         mean = torch.tensor(normalization['mean']).view(1, 3, 1, 1)
         std = torch.tensor(normalization['std']).view(1, 3, 1, 1)
-        tensor = ((tensor - mean) / std).to(self.device)
+        tensor = (tensor - mean) / std
+        if timings is not None:
+            started = _record_stage(timings, 'preprocess_ms', started)
+        tensor = tensor.to(self.device)
+        if timings is not None:
+            started = _record_stage(timings, 'input_transfer_ms', started, self.device)
         with torch.inference_mode():
             logits = self.model(tensor)['out']
+            if timings is not None:
+                started = _record_stage(timings, 'forward_ms', started, self.device)
             # Stretch preprocessing is inverted BEFORE argmax/contour extraction.
             logits = F.interpolate(logits, size=(frame.height, frame.width), mode='bilinear', align_corners=False)
-            probabilities = logits.softmax(dim=1)[0].cpu().numpy()
+            probabilities = logits.softmax(dim=1)[0]
+            if timings is not None:
+                started = _record_stage(timings, 'output_resize_softmax_ms', started, self.device)
+            probabilities = probabilities.cpu().numpy()
+            if timings is not None:
+                started = _record_stage(timings, 'output_transfer_ms', started, self.device)
         structures, labels, withheld = masks_to_structures(
             probabilities, self.checkpoint['classes'], self.threshold, self.min_area,
         )
@@ -164,7 +205,11 @@ class SegmentationAdapter:
             'model': {'id': self.checkpoint['model_id'], 'version': self.checkpoint['model_version']},
             'structures': structures,
         }
+        if timings is not None:
+            started = _record_stage(timings, 'geometry_ms', started)
         validate_frame_result(result)
+        if timings is not None:
+            _record_stage(timings, 'validation_ms', started)
         return result, labels, withheld
 
     def predict(self, frame: FrameInput):

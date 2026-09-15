@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 import tempfile
+from unittest import mock
 
 try:
     import numpy as np
@@ -105,3 +106,137 @@ class MaskExportTests(unittest.TestCase):
         np.testing.assert_array_equal(from_file[1], from_rgb[1])
         self.assertTrue((from_rgb[1] == 1).all())
         self.assertEqual(from_rgb[1].shape, (8, 12))
+
+
+@unittest.skipUnless(AVAILABLE, 'Install ml[train] for inference latency tests')
+class InferenceExecutionTests(unittest.TestCase):
+    def make_model(self):
+        class TinySegmentationModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.classifier = torch.nn.Conv2d(3, 2, 1)
+                self.aux_classifier = torch.nn.Conv2d(3, 2, 1)
+                self.load_events = []
+                self.aux_calls = 0
+                with torch.no_grad():
+                    self.classifier.weight.zero_()
+                    self.classifier.bias.zero_()
+                    self.classifier.weight[1, 0, 0, 0] = 6
+                    self.classifier.bias[1] = -3
+
+            def load_state_dict(self, state, strict=True, **kwargs):
+                self.load_events.append({'strict': strict, 'aux_present': self.aux_classifier is not None})
+                return super().load_state_dict(state, strict=strict, **kwargs)
+
+            def forward(self, tensor):
+                result = {'out': self.classifier(tensor)}
+                if self.aux_classifier is not None:
+                    self.aux_calls += 1
+                    result['aux'] = self.aux_classifier(tensor)
+                return result
+
+        return TinySegmentationModel()
+
+    def checkpoint(self):
+        return {
+            'format_version': 1, 'architecture': 'deeplabv3_mobilenet_v3_large',
+            'model_state': self.make_model().state_dict(),
+            'input_size': {'width': 6, 'height': 4},
+            'normalization': {'mean': [0, 0, 0], 'std': [1, 1, 1]},
+            'classes': MaskExportTests.classes,
+            'model_id': 'test-inference', 'model_version': 'fixture',
+        }
+
+    def frame_and_rgb(self):
+        rgb = np.zeros((8, 12, 3), dtype=np.uint8)
+        rgb[2:7, 2:10, 0] = 255
+        frame = FrameInput(media_id='latency-fixture', frame_number=3, timestamp_ms=100,
+                           width=12, height=8)
+        return frame, rgb
+
+    def assert_details_equal(self, expected, actual):
+        self.assertEqual(expected[0], actual[0])
+        np.testing.assert_array_equal(expected[1], actual[1])
+        self.assertEqual(expected[2], actual[2])
+
+    def test_auxiliary_disabled_after_strict_checkpoint_load(self):
+        model = self.make_model()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'fixture.pt'
+            torch.save(self.checkpoint(), path)
+            with mock.patch('holospex_ml.model.build_model', return_value=model):
+                adapter = SegmentationAdapter(path, device='cpu')
+        self.assertEqual(model.load_events, [{'strict': True, 'aux_present': True}])
+        self.assertIsNone(adapter.model.aux_classifier)
+        self.assertIn('aux_classifier.weight', adapter.checkpoint['model_state'])
+
+    def test_missing_auxiliary_tensor_still_fails_strict_loading(self):
+        model = self.make_model()
+        checkpoint = self.checkpoint()
+        del checkpoint['model_state']['aux_classifier.weight']
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'invalid.pt'
+            torch.save(checkpoint, path)
+            with mock.patch('holospex_ml.model.build_model', return_value=model):
+                with self.assertRaisesRegex(RuntimeError, 'aux_classifier.weight'):
+                    SegmentationAdapter(path, device='cpu')
+        self.assertEqual(model.load_events, [{'strict': True, 'aux_present': True}])
+        self.assertIsNotNone(model.aux_classifier)
+
+    def test_auxiliary_opt_out_preserves_logits_and_export_exactly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'fixture.pt'
+            torch.save(self.checkpoint(), path)
+            with mock.patch('holospex_ml.model.build_model', side_effect=lambda **_: self.make_model()):
+                baseline = SegmentationAdapter(path, device='cpu', min_area=1, run_auxiliary_head=True)
+                optimized = SegmentationAdapter(path, device='cpu', min_area=1)
+        frame, rgb = self.frame_and_rgb()
+        captured_logits = []
+        def capture_main_logits(module, inputs, output):
+            captured_logits.append(output['out'].clone())
+        baseline_hook = baseline.model.register_forward_hook(capture_main_logits)
+        optimized_hook = optimized.model.register_forward_hook(capture_main_logits)
+        try:
+            expected = baseline.predict_rgb_details(frame, rgb)
+            actual = optimized.predict_rgb_details(frame, rgb)
+        finally:
+            baseline_hook.remove()
+            optimized_hook.remove()
+        self.assert_details_equal(expected, actual)
+        self.assertTrue(torch.equal(*captured_logits))
+        self.assertEqual(baseline.model.aux_calls, 1)
+        self.assertEqual(optimized.model.aux_calls, 0)
+        self.assertTrue(actual[0]['structures'])
+
+    def test_stage_timings_preserve_outputs_and_only_profiled_calls_synchronize(self):
+        adapter = SegmentationAdapter.__new__(SegmentationAdapter)
+        adapter.model, adapter.device = self.make_model().eval(), torch.device('cpu')
+        adapter.threshold, adapter.min_area = 0.5, 1
+        adapter.checkpoint = self.checkpoint()
+        frame, rgb = self.frame_and_rgb()
+        timings = {}
+        with mock.patch('holospex_ml.inference._synchronize_device') as synchronize:
+            expected = adapter.predict_rgb_details(frame, rgb)
+            synchronize.assert_not_called()
+            actual = adapter.predict_rgb_details(frame, rgb, timings=timings)
+            self.assertEqual(synchronize.call_count, 5)
+            self.assertTrue(all(call.args == (adapter.device,) for call in synchronize.call_args_list))
+        self.assert_details_equal(expected, actual)
+        self.assertEqual(set(timings), {
+            'preprocess_ms', 'input_transfer_ms', 'forward_ms', 'output_resize_softmax_ms',
+            'output_transfer_ms', 'geometry_ms', 'validation_ms',
+        })
+        self.assertTrue(all(np.isfinite(value) and value >= 0 for value in timings.values()))
+
+    def test_synchronization_uses_requested_backend_and_cuda_index(self):
+        from holospex_ml.inference import _synchronize_device
+        with mock.patch('torch.cuda.synchronize') as cuda_sync, mock.patch('torch.mps.synchronize') as mps_sync:
+            _synchronize_device(torch.device('cpu'))
+            cuda_sync.assert_not_called()
+            mps_sync.assert_not_called()
+            cuda_device = torch.device('cuda:2')
+            _synchronize_device(cuda_device)
+            cuda_sync.assert_called_once_with(cuda_device)
+            mps_sync.assert_not_called()
+            _synchronize_device(torch.device('mps'))
+            mps_sync.assert_called_once_with()

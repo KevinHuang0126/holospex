@@ -23,11 +23,11 @@ The connection is implemented; trained weights, runtime hosting, local training
 assets and device validation still need their actual inputs.
 Reviewed lesson content and glasses integration remain future work.
 
-**Current ML model:** the September 14 batch-002 DeepLabV3–ResNet50 checkpoint
+**Current ML model:** the September 14 weight-decay-0.05 DeepLabV3–ResNet50 checkpoint
 at `ml/weights/current/best.pt` leads the saved native-validation comparisons
-with **52.8251% foreground IoU**. See the [current model handoff](ml/CURRENT_MODEL.md)
+with **53.3060% foreground IoU**. See the [current model handoff](ml/CURRENT_MODEL.md)
 for its exact identity, verified artifact retrieval, inference command and
-matching video predictions. A Git checkout does not include the weights or
+video-export compatibility. A Git checkout does not include the weights or
 prediction exports; the browser's bundled lesson remains synthetic.
 
 For live identification, install the ML virtual environment, then run

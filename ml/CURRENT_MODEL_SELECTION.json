@@ -1,0 +1,428 @@
+{
+  "formatVersion": 1,
+  "selectedAt": "2026-09-14T23:55:24.712735+00:00",
+  "selectionCriterion": "highest_verified_native_validation_foreground_macro_iou_among_collected_runs",
+  "authorization": "User requested the best model and all updates on main before cloud hosting.",
+  "checkpointSha256": "9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b",
+  "checkpointBytes": 168351963,
+  "modelId": "holospex-deeplabv3-resnet50",
+  "modelVersion": "2026-09-14T16:39:12.476979Z-epoch-43",
+  "inputSize": {
+    "width": 672,
+    "height": 384
+  },
+  "minimumConfidence": 0.5,
+  "sourceRun": "followup-20260914-1509-001-moco-wd005",
+  "sourceJob": "projects/576811516435/locations/us-central1/customJobs/9068226144402145280",
+  "completionUri": "gs://eastwest72hack26bos-501-holospex-ml/runs/followup-20260914-1509-001-moco-wd005/attempts/20260914T163844Z-80074ab281774218925909553568b1f1/status/completed.json",
+  "completionSha256": "218fdf54a85994b51ffd35103be29a8d1c384c412e20dfc9eb4a81c2b060add9",
+  "validation": {
+    "foregroundMacroIoU": 0.5330602679452245,
+    "smallPooledIoU": 0.36422096589662667,
+    "smallCaseEqualIoU": 0.3288652637463576,
+    "sampleCount": 75,
+    "caseCount": 10,
+    "basis": "original_mask_pixels",
+    "ignoreSourceId": 255,
+    "testEvaluated": false
+  },
+  "selectedEpoch": 43,
+  "completedEpochs": 53,
+  "trainingSamples": 407,
+  "previousCheckpointSha256": "b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911",
+  "improvementPercentagePoints": 0.48091263807742424,
+  "tradeoffs": [
+    {
+      "structureId": "gallbladder",
+      "iou": 0.8643221233161578,
+      "iouChangePercentagePoints": -0.2874385679461744,
+      "recallChangePercentagePoints": -1.1096178884374641
+    },
+    {
+      "structureId": "cystic_duct",
+      "iou": 0.5133080307498912,
+      "iouChangePercentagePoints": -0.8892830982798916,
+      "recallChangePercentagePoints": -4.728737195981592
+    },
+    {
+      "structureId": "cystic_artery",
+      "iou": 0.2888845225397182,
+      "iouChangePercentagePoints": 2.0769539721484875,
+      "recallChangePercentagePoints": 0.7158283405322541
+    },
+    {
+      "structureId": "cystic_plate",
+      "iou": 0.2952150740389028,
+      "iouChangePercentagePoints": -1.4733093643192308,
+      "recallChangePercentagePoints": -7.597010962333578
+    },
+    {
+      "structureId": "hepatocystic_triangle_dissection",
+      "iou": 0.3594762362579944,
+      "iouChangePercentagePoints": 3.152840378878774,
+      "recallChangePercentagePoints": -1.0606415359400545
+    },
+    {
+      "structureId": "tool",
+      "iou": 0.8771556207686828,
+      "iouChangePercentagePoints": 0.30571250798261396,
+      "recallChangePercentagePoints": -0.2457049263905775
+    }
+  ],
+  "verification": {
+    "rankedRuns": 33,
+    "winnerCompletionArtifactsVerified": 18,
+    "fixedValidationIdentitiesVerified": true,
+    "confusionMetricsRecomputed": true,
+    "strictCpuLoadPassed": true,
+    "mlTestsPassed": 355,
+    "scriptTestsPassed": 17,
+    "webCheckPassed": true,
+    "webBuildPassed": true,
+    "phonePackagePassed": true,
+    "defaultInstallerPassed": true,
+    "localApiReadyModel": {
+      "id": "holospex-deeplabv3-resnet50",
+      "version": "2026-09-14T16:39:12.476979Z-epoch-43"
+    },
+    "localSyntheticFrameHttpStatus": 200,
+    "localBrowserVideoIdentificationPassed": true
+  },
+  "limitations": [
+    "Best among available audited checkpoints; retained epochs were not re-evaluated.",
+    "Repeated validation selection does not establish test accuracy or clinical validity.",
+    "Existing video exports and remote hosts retain their original model identity until explicitly updated."
+  ],
+  "rankedRuns": [
+    {
+      "run_name": "followup-20260914-1509-001-moco-wd005",
+      "foreground_macro_iou": 0.5330602679452245,
+      "small_pooled_iou": 0.36422096589662667,
+      "small_case_equal_iou": 0.3288652637463576,
+      "checkpoint_sha256": "9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b",
+      "selected_epoch": 43,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "followup-20260914-1509-003-best-full-seed43",
+      "foreground_macro_iou": 0.5282603878743404,
+      "small_pooled_iou": 0.3560340203314771,
+      "small_case_equal_iou": 0.31936865352508287,
+      "checkpoint_sha256": "73596a291969d65c1a708a50c63d6063b07eba03fa02d08f1885c30556d40816",
+      "selected_epoch": 38,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "review2-20260914-001-batch002-moco-lovasz-s42",
+      "foreground_macro_iou": 0.5282511415644503,
+      "small_pooled_iou": 0.3570529611755563,
+      "small_case_equal_iou": 0.32275247232638654,
+      "checkpoint_sha256": "b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911",
+      "selected_epoch": 34,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "followup-20260914-1509-002-moco-lovasz050",
+      "foreground_macro_iou": 0.5248039478969742,
+      "small_pooled_iou": 0.35366403668493107,
+      "small_case_equal_iou": 0.33049066342880273,
+      "checkpoint_sha256": "b13445dad9a351213dd8c8edcc18acfa80481bedffc04cd57d337092fb9c41d1",
+      "selected_epoch": 32,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reg-20260914-1945-003-middle-wd0025-s43",
+      "foreground_macro_iou": 0.5229051262988516,
+      "small_pooled_iou": 0.3483662385606195,
+      "small_case_equal_iou": 0.321205155690443,
+      "checkpoint_sha256": "539222d1fcb35a06a9d6cdc3d1baec728990f2fb67bbb399553a26e9b10d3621",
+      "selected_epoch": 42,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-012-moco-r50-lovasz",
+      "foreground_macro_iou": 0.5204088569848146,
+      "small_pooled_iou": 0.3461512248487556,
+      "small_case_equal_iou": 0.2822468840678614,
+      "checkpoint_sha256": "b037e85dff5f0ca552258d733cd02364717f99b57d93e6a0b10bbcd3c2ceea0f",
+      "selected_epoch": 34,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reg-20260914-1945-002-middle-wd0025-s42",
+      "foreground_macro_iou": 0.5199101271480316,
+      "small_pooled_iou": 0.3460969554561329,
+      "small_case_equal_iou": 0.31382038770263265,
+      "checkpoint_sha256": "324b482e7dd4b0c71036a9e93c1a12fe48d0c3bae78b3c4d5b350b54e1449dd8",
+      "selected_epoch": 34,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "review2-20260914-002-batch002-moco-lovasz-s43",
+      "foreground_macro_iou": 0.5191723768082913,
+      "small_pooled_iou": 0.34373667789358875,
+      "small_case_equal_iou": 0.31421636816840426,
+      "checkpoint_sha256": "13db3a323cf56fd4f28bb79f710d3294ea5c396b4d762023c0dfee5c4276285b",
+      "selected_epoch": 39,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reg-20260914-1945-001-control-wd001-s44",
+      "foreground_macro_iou": 0.5165751873487978,
+      "small_pooled_iou": 0.3406299215867674,
+      "small_case_equal_iou": 0.2980216487348082,
+      "checkpoint_sha256": "135efc4cdc3decc7c65881cfa9838418288535b6c0a30fbb5f9cea5c663916c7",
+      "selected_epoch": 25,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-014-best-full-seed43",
+      "foreground_macro_iou": 0.5163395898506616,
+      "small_pooled_iou": 0.34006833004576487,
+      "small_case_equal_iou": 0.30032905054149706,
+      "checkpoint_sha256": "5d1c98b979b7d03c32b6ae34d024f09de138ef616130bce6519efa367e8e5a3c",
+      "selected_epoch": 24,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "followup-20260914-1509-004-best-full-seed44",
+      "foreground_macro_iou": 0.5147898889661991,
+      "small_pooled_iou": 0.33740846566178384,
+      "small_case_equal_iou": 0.3128158586410973,
+      "checkpoint_sha256": "609a09bbabeb5c3fb6bca62aa508d1f5ca8c34815013f9eefaaac10f44c37ae9",
+      "selected_epoch": 40,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reg-20260914-1945-004-middle-wd0025-s44",
+      "foreground_macro_iou": 0.514657672574026,
+      "small_pooled_iou": 0.3372591291616499,
+      "small_case_equal_iou": 0.3080503522481536,
+      "checkpoint_sha256": "e403594d9587cee7b35846ce7f0ce1b371624fd7a9570afdd63274e187448ba4",
+      "selected_epoch": 41,
+      "epochs_completed": 53,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-006-moco-r50-matched",
+      "foreground_macro_iou": 0.5109126630362312,
+      "small_pooled_iou": 0.33268084207610876,
+      "small_case_equal_iou": 0.2832667923747771,
+      "checkpoint_sha256": "1bc74c1f7915c01370ec38d9c6450f5a82c0cf8b558cb76f919f43cf9e04fd1d",
+      "selected_epoch": 32,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-015-best-full-seed44",
+      "foreground_macro_iou": 0.5085849121071015,
+      "small_pooled_iou": 0.3267950515631236,
+      "small_case_equal_iou": 0.2841100370506279,
+      "checkpoint_sha256": "78faddac3608296a21edc482ef3922f647cdf43fbfdd0bd610252a57643d807c",
+      "selected_epoch": 30,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-011-moco-r50-mild",
+      "foreground_macro_iou": 0.5080599237809197,
+      "small_pooled_iou": 0.3295554835984072,
+      "small_case_equal_iou": 0.2778011926346595,
+      "checkpoint_sha256": "40a92ad2d4dcbe3b66aa282ce22edf8f37a36dfc4f580b6056d3fbe433e5c563",
+      "selected_epoch": 43,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-010-moco-r50-896",
+      "foreground_macro_iou": 0.5063259442913901,
+      "small_pooled_iou": 0.32527204770558155,
+      "small_case_equal_iou": 0.28389329249013706,
+      "checkpoint_sha256": "5fedebd2367e9709784dccb1b479256d488d758061f2acdc718c2ba6a2cbb67f",
+      "selected_epoch": 38,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-005-generic-r50-matched",
+      "foreground_macro_iou": 0.5009441402213078,
+      "small_pooled_iou": 0.32024706713744283,
+      "small_case_equal_iou": 0.28529595898059074,
+      "checkpoint_sha256": "0c06f4941a4a4e09c270a566b6127d3ee1065da85ad7506d59d6398da7e73c28",
+      "selected_epoch": 24,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-008-generic-r50-896",
+      "foreground_macro_iou": 0.49597484768252614,
+      "small_pooled_iou": 0.3132705883029331,
+      "small_case_equal_iou": 0.2833972625930162,
+      "checkpoint_sha256": "3c83e122d8abd365ec54652f865feddff32bf3a16040cc596a29dc98d146ee31",
+      "selected_epoch": 34,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-004-surgical-r50-cosine",
+      "foreground_macro_iou": 0.4928463175817683,
+      "small_pooled_iou": 0.307720208739385,
+      "small_case_equal_iou": 0.2833345746033886,
+      "checkpoint_sha256": "0983cb099b806b1a6c07c17ac5234b4ef9a198a878b44a88da9b475e823a2f98",
+      "selected_epoch": 21,
+      "epochs_completed": 60,
+      "duration_limited": false
+    },
+    {
+      "run_name": "sam-resolution-001-896x512-s42",
+      "foreground_macro_iou": 0.46004493705238286,
+      "small_pooled_iou": 0.2757330616006321,
+      "small_case_equal_iou": 0.252328496254084,
+      "checkpoint_sha256": "ec7222983efd219aeafd1f02ac138ac63c1e2218e9ae4531c869e043f5a3954b",
+      "selected_epoch": 13,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-009-warm-main-only",
+      "foreground_macro_iou": 0.4594766482263239,
+      "small_pooled_iou": 0.27580962507417006,
+      "small_case_equal_iou": 0.25847317054801394,
+      "checkpoint_sha256": "0097868e850392092f5145fe90348ffd4207fdfdb36b702cf73c6d4d3857b2b0",
+      "selected_epoch": 1,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-001-warm-cosine",
+      "foreground_macro_iou": 0.45875837466142766,
+      "small_pooled_iou": 0.2751464429319817,
+      "small_case_equal_iou": 0.2586288682814107,
+      "checkpoint_sha256": "07f9e5c89833bed895b74386e4edcea1f2a64ac0b5a574e9dfd9d031b30eaab8",
+      "selected_epoch": 1,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-002-added-s42",
+      "foreground_macro_iou": 0.45871687267598404,
+      "small_pooled_iou": 0.27654517741772217,
+      "small_case_equal_iou": 0.2642803121504461,
+      "checkpoint_sha256": "b59cbc7d3e7fd25b74631f1e22611e92bbdf72a87867708a994b50ac8cd94e4c",
+      "selected_epoch": 33,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-013-detail-full-backbone",
+      "foreground_macro_iou": 0.4577283357155379,
+      "small_pooled_iou": 0.2760951537633343,
+      "small_case_equal_iou": 0.2228542411417789,
+      "checkpoint_sha256": "c884bacba21c6ec5d7a3714613492f10e59955f5bd4fa897ab37ac84aba22199",
+      "selected_epoch": 28,
+      "epochs_completed": 80,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-002-reviewed-896-cosine",
+      "foreground_macro_iou": 0.4568640383873342,
+      "small_pooled_iou": 0.27118172035273863,
+      "small_case_equal_iou": 0.2634358515152828,
+      "checkpoint_sha256": "f3de04f96e05b3038d725a6a5320a8898a8344b8a1c42378ae4ae4adee424035",
+      "selected_epoch": 43,
+      "epochs_completed": 80,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-007-warm-lovasz",
+      "foreground_macro_iou": 0.45647051526242427,
+      "small_pooled_iou": 0.2705467538228421,
+      "small_case_equal_iou": 0.25127862659727046,
+      "checkpoint_sha256": "290ff300c32df8d93db348fe0f68cfca0ff8c54eebf3a5d56fba81b1ef6165f3",
+      "selected_epoch": 1,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "sam-resolution-002-1120x640-s42",
+      "foreground_macro_iou": 0.4560468071055188,
+      "small_pooled_iou": 0.28100531642316134,
+      "small_case_equal_iou": 0.2528270660195624,
+      "checkpoint_sha256": "67043caba67dea86dbe89af770943ca5c57edd152d73edafdb12e8692a492815",
+      "selected_epoch": 23,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-006-added-s44",
+      "foreground_macro_iou": 0.45196395114149523,
+      "small_pooled_iou": 0.2752515747978984,
+      "small_case_equal_iou": 0.2391210151129362,
+      "checkpoint_sha256": "8e4007b585ada756fa9442cb519ea462c878ddbbe934b661819e58c67f80f9ce",
+      "selected_epoch": 38,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-004-added-s43",
+      "foreground_macro_iou": 0.4479079335331635,
+      "small_pooled_iou": 0.2650000134281242,
+      "small_case_equal_iou": 0.23619877709265932,
+      "checkpoint_sha256": "43e5994751aa3f7de6dda660d41106be972cfd3522554739c37ac1980dbb404c",
+      "selected_epoch": 38,
+      "epochs_completed": 40,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-005-base-s44",
+      "foreground_macro_iou": 0.43797931039994403,
+      "small_pooled_iou": 0.2510815830081549,
+      "small_case_equal_iou": 0.2204905399200994,
+      "checkpoint_sha256": "11fa14bb05e6b4f6fe93bf25020d421160889d967cd950ac1188a344a0543988",
+      "selected_epoch": 23,
+      "epochs_completed": 42,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-003-base-s43",
+      "foreground_macro_iou": 0.43353075216320985,
+      "small_pooled_iou": 0.2432087695904217,
+      "small_case_equal_iou": 0.22998561245546717,
+      "checkpoint_sha256": "603daf75d413fa770699bc1192ed4199a461e05cdb04c6d4588b3094208caf3d",
+      "selected_epoch": 26,
+      "epochs_completed": 42,
+      "duration_limited": false
+    },
+    {
+      "run_name": "reviewed-001-base-s42",
+      "foreground_macro_iou": 0.42622153759741915,
+      "small_pooled_iou": 0.23775461018366237,
+      "small_case_equal_iou": 0.2271988412107778,
+      "checkpoint_sha256": "a87d74f38b933cedc4dbbcf8495b0a6b01846b059af408cc583ea1b90ba67cbd",
+      "selected_epoch": 34,
+      "epochs_completed": 42,
+      "duration_limited": false
+    },
+    {
+      "run_name": "auto-20260913-003-detail-672-cosine",
+      "foreground_macro_iou": 0.3979870744130993,
+      "small_pooled_iou": 0.19165666391225894,
+      "small_case_equal_iou": 0.18847335929655679,
+      "checkpoint_sha256": "f2b5940dcb4370cc55ca0920b78869041a459fe2152d8e4791b0adbfab51f7e2",
+      "selected_epoch": 26,
+      "epochs_completed": 80,
+      "duration_limited": false
+    }
+  ]
+}

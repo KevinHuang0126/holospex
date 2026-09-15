@@ -1,98 +1,96 @@
 # Current model
 
-Use **`ml/weights/current/best.pt`** for the best verified local checkpoint.
-Its [selection receipt](weights/current/selection.json) records source, checksum,
-model version, validation metrics, previous selection and class tradeoffs.
-Weights and runtime receipts remain outside Git; historical checkpoints remain.
-Cloning or pulling `main` updates this handoff, but does not install the model
-or replace predictions already loaded in a browser.
+Use **`ml/weights/current/best.pt`**. On September 14, the user requested the
+best verified model and an up-to-date `main` before cloud hosting. The selected
+checkpoint is the **weight-decay-0.05 seed-42 DeepLabV3–ResNet50** from the
+completed accuracy follow-ups, selected at epoch **43 / 53**.
 
-The September 14 batch-002 seed-42 checkpoint uses DeepLabV3–ResNet50 with surgical
-MoCo initialization and balanced CE + 0.25 main Lovasz. Selected at epoch 34/53,
-it uses 672 × 384 input and trained on 407 images. On the fixed 75-image native validation set:
+The live runner and installer pin this model in
+[`current_model.py`](src/holospex_ml/current_model.py).
+The [tracked selection receipt](CURRENT_MODEL_SELECTION.json) records the ranked
+33-run audit, exact artifact identity, retrieval receipt and class tradeoffs.
+Weights remain outside Git. Pulling `main` does not install them or restart a host.
 
-| Metric | Previous best | Current |
+| Native validation metric | Previous batch-002 | Current |
 | --- | ---: | ---: |
-| Six-class foreground IoU | 52.0409% | 52.8251% |
-| Small-anatomy pooled IoU | 34.6151% | 35.7053% |
-| Equal-case small-anatomy IoU | 28.2247% | 32.2752% |
+| Six-class foreground IoU | 52.8251% | 53.3060% |
+| Small-anatomy pooled IoU | 35.7053% | 36.4221% |
+| Equal-case small-anatomy IoU | 32.2752% | 32.8865% |
 
-Checkpoint SHA-256:
-`b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911`.
-Model version: `2026-09-14T04:29:29.757933Z-epoch-34`.
-The user explicitly authorized promotion, and strict CPU loading passed.
-The winner improves aggregate IoU but triangle-dissection IoU declines 6.987
-points; consult the [paired results](outputs/reviewed-batch002-20260914/reports/paired-final/RESULTS.md)
-for precision/recall and case-level tradeoffs. Test remains excluded.
+Scores use the same 75 validation images / ten cases at original 854 × 480
+resolution, ignoring source 255 and excluding background only from the class
+average. Primary improvement is **+0.4809 percentage points**. Artery and triangle
+IoU improve 2.0770 and 3.1528 points; plate IoU falls 1.4733 points and plate
+recall falls 7.5970 points. This is the best available audited checkpoint by
+foreground IoU, not evidence of uniform class gains, test accuracy or clinical
+validity. Retained epoch snapshots have not been searched at the native grid.
 
-## Retrieve the checkpoint on a fresh checkout
+- Model ID: `holospex-deeplabv3-resnet50`
+- Model version: `2026-09-14T16:39:12.476979Z-epoch-43`
+- SHA-256: `9dc50d58fb2f605f5fc2a00652d7dae662f7584ab08e37502fb179b152873c1b`
+- Size: **168,351,963 bytes**
+- Input: 672 × 384; original checkpoint normalization and class mapping.
+- Training: 407 images, surgical MoCo initialization, balanced CE + 0.25 Lovasz,
+  AdamW weight decay 0.05, seed 42; complete 53-epoch schedule.
+- Live confidence cutoff: **0.5**, unchanged and uncalibrated.
 
-Use an account with access to the project's private GCS bucket and the
-`holospex` gcloud configuration described in [CLOUD_TRAINING.md](CLOUD_TRAINING.md).
-The completed seed-42 Vertex job is `561146350624833536` in project
-`576811516435`, region `us-central1`. Its exact completion record is bound to
-the collected checkpoint and metrics:
+## Retrieve and verify
+
+Use an account with access to the private GCS bucket and the `holospex` gcloud
+configuration in [CLOUD_TRAINING.md](CLOUD_TRAINING.md). The source Vertex job is
+`9068226144402145280` in `us-central1`, project `576811516435`.
+The collection command verifies every artifact size and SHA-256 and requires
+a fresh output directory:
 
 ```sh
 .venv/bin/python ml/cloud/collect_vertex_results.py \
-  --completion-uri gs://eastwest72hack26bos-501-holospex-ml/runs/review2-20260914-001-batch002-moco-lovasz-s42/attempts/20260914T042903Z-3691f7845f1b416da9e46380900f8a21/status/completed.json \
-  --output-dir ml/outputs/current-model-download
+  --completion-uri gs://eastwest72hack26bos-501-holospex-ml/runs/followup-20260914-1509-001-moco-wd005/attempts/20260914T163844Z-80074ab281774218925909553568b1f1/status/completed.json \
+  --output-dir ml/outputs/current-model-download-wd005
+
+.venv/bin/python ml/cloud/audit_autonomous_results.py \
+  ml/outputs/current-model-download-wd005
 ```
 
-The existing collector verifies every artifact's size and SHA-256 and refuses
-an existing output directory. It retains training/evaluation records and cloud
-receipts alongside `train/best.pt`. Confirm that the checkpoint matches this
-selection before using it:
+For a fresh installation:
 
 ```sh
-.venv/bin/python - <<'PY'
-import hashlib
-from pathlib import Path
-
-checkpoint = Path("ml/outputs/current-model-download/train/best.pt")
-with checkpoint.open("rb") as stream:
-    digest = hashlib.file_digest(stream, "sha256").hexdigest()
-if checkpoint.stat().st_size != 168351963 or digest != "b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911":
-    raise SystemExit("Checkpoint does not match the current model selection")
-print(f"Verified current checkpoint: {checkpoint}")
-PY
+npm run model:prepare -- \
+  --checkpoint ml/outputs/current-model-download-wd005/train/best.pt
+npm run model:serve
 ```
 
-Pass `--checkpoint ml/outputs/current-model-download/train/best.pt` directly,
-or copy the verified checkpoint to `ml/weights/current/best.pt` for the commands
-below. Links to the original selection receipt, paired report and video exports
-refer to the ML lead's ignored local artifacts; those are not installed by Git
-or by collecting this training run.
+The installer refuses to overwrite different existing weights. For an upgrade,
+first stop the old runner and move its checkpoint and any `selection.json` into
+a uniquely named directory under `ml/weights/previous/`; then run the commands
+above. Preserve the old files for rollback. On the ML lead's checkout, the old
+checkpoint and receipt are already backed up under
+`ml/weights/previous/b406ed42ab0394edba22e1dde0edc2865a6346adb61c4bea7ab0bc00d08e1911/`.
 
-## Export predictions
+A supplied checkpoint must pass the pinned checksum and metadata checks before
+readiness. `GET /api/identify` must advertise the version above after the model
+host is updated and restarted. The Vercel deployment alone does not install
+weights or run Python; see [hosting](../docs/live-feed.md).
 
-From the repository root:
+## Video exports and compatibility
+
+The existing 1,056-frame Gupta export at
+`ml/outputs/reviewed-batch002-20260914/gupta-current/predictions.json` uses the
+**previous** batch-002 model (`2026-09-14T04:29:29.757933Z-epoch-34`).
+It is preserved and must not be relabeled as this model's output. Use the
+live identification path with the selected runner, or explicitly generate a
+fresh export for offline playback:
 
 ```sh
 .venv/bin/python -m holospex_ml predict-video \
   --checkpoint ml/weights/current/best.pt \
   --input PATH_TO_PREPARED_VIDEO.mp4 \
-  --media-id UNIQUE_CLIP_ID \
-  --device auto --threshold 0.5 \
+  --media-id UNIQUE_CLIP_ID --device cpu --threshold 0.5 \
   --output ml/outputs/NEW_EXPORT/predictions.json
 ```
 
-Choose a fresh output directory. The prepared video must have zero-start
-presentation timestamps and no audio; see [TRAINING.md](TRAINING.md). The CLI
-requires an explicit checkpoint argument, so use this stable path.
-
-The browser consumes exported JSON, not weights. Open **Camera prototype →
-Video**. Load the exact video first, then its JSON; select ML prediction,
-Learn, threshold 0.5 and Show overlays.
-The old Gupta export in `ml/outputs/gupta-cvs-lovasz/` retains run012 identity.
-The [refreshed predictions.json](outputs/reviewed-batch002-20260914/gupta-current/predictions.json)
-uses this checkpoint and covers all 1,056 frames of the exact
-[Gupta clip](outputs/candidate-cvs-video/gupta-2023-cvs-anterior-posterior.mp4).
-Decoded timestamps, original dimensions, raw masks, model/source checksums and
-the actual frontend parser/matcher passed verification. At 10 seconds, frame
-240 displays predictions without a matching-result warning. The browser footer
-should show **1,056 validated frame results** after loading this JSON.
-See [DEMO_MEDIA.md](DEMO_MEDIA.md) for clip provenance and attribution.
-
-Endoscapes and SelfSupSurg retain their recorded CC BY-NC-SA 4.0 provenance.
-Predictions remain separate from reviewed lesson answers.
+Use the exact zero-start video and its exported frame identities; see
+[DEMO_MEDIA.md](DEMO_MEDIA.md). Existing remote deployments and already-loaded
+JSON retain their old identity until explicitly updated. No new cloud job,
+full-video export, test evaluation or hosting deployment accompanies this
+selection. Endoscapes and SelfSupSurg retain their recorded CC BY-NC-SA 4.0
+provenance; predictions remain separate from reviewed lesson answers.
