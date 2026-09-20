@@ -173,9 +173,11 @@ export function drawHud(canvas: HTMLCanvasElement, image: CanvasImageSource | nu
   });
   if (scene.warning) {
     const warningY = railY + connectionHeight + Math.max(175, layoutLabels * 62 + 155);
-    context.fillStyle = "#4d3410"; context.fillRect(railX + 10, warningY - 22, railWidth - 20, height - warningY + 12);
-    context.fillStyle = "#ffe7a3"; context.font = "bold 17px system-ui";
-    wrapText(context, `! ${scene.warning}`, railX + 20, warningY, railWidth - 40, 24);
+    context.fillStyle = "#29434c"; context.fillRect(railX + 18, warningY - 22, railWidth - 36, 1);
+    context.fillStyle = "#bbd0d5"; context.font = "600 12px system-ui";
+    context.fillText("Overlay note", railX + 18, warningY);
+    context.font = "14px system-ui";
+    wrapText(context, scene.warning, railX + 18, warningY + 23, railWidth - 36, 20);
   }
   return { image: rect, width: displayWidth, height };
 }

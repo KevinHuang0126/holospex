@@ -93,7 +93,7 @@ test("fragmented predictions retain every outline but only label the largest com
   assert.deepEqual(drawHud(canvas, null, { ...scene, structures: [...structures, ...Array.from({ length: 20 }, (_, i) => ({ ...structures[0], instanceId: `speck-${i}` }))] }), layout);
 });
 
-test("every combination of visible anatomy keeps the video, class rows and warning panel fixed", () => {
+test("every combination of visible anatomy keeps the video, class rows and status note fixed", () => {
   const ids = Object.keys(anatomy) as AnatomyId[];
   const structures = ids.map(structureId => ({ ...scene.structures[0], structureId, instanceId: structureId }));
   for (const width of [360, 1200]) {
@@ -102,7 +102,7 @@ test("every combination of visible anatomy keeps the video, class rows and warni
       calls.length = 0;
       const layout = drawHud(canvas, null, { ...scene, labelSlots: undefined, structures: items, warning });
       const text = calls.filter(call => call.name === "fillText");
-      const warningStart = text.findIndex(call => String(call.args[0]).startsWith("!"));
+      const warningStart = text.findIndex(call => call.args[0] === "Overlay note");
       return { layout, size: [canvas.width, canvas.height],
         text: warningStart < 0 ? text : text.slice(0, warningStart),
         badges: calls.filter(call => call.name === "arc" && call.args[2] === 9),
@@ -114,8 +114,8 @@ test("every combination of visible anatomy keeps the video, class rows and warni
       const sparse = render(visible, "Low-confidence anatomy is hidden.");
       assert.deepEqual(sparse.layout, full.layout);
       assert.deepEqual(sparse.size, full.size);
-      assert.deepEqual(sparse.panel, full.panel, "Warning box must not follow the last visible label");
-      for (const text of sparse.text.filter(call => !String(call.args[0]).startsWith("!"))) {
+      assert.deepEqual(sparse.panel, full.panel, "Status divider must not follow the last visible label");
+      for (const text of sparse.text) {
         assert.ok(full.text.some(call => JSON.stringify(call) === JSON.stringify(text)), "Visible labels keep their original coordinates");
       }
       for (const badge of sparse.badges) assert.ok(full.badges.some(call => JSON.stringify(call) === JSON.stringify(badge)));

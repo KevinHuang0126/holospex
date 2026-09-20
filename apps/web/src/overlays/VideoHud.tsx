@@ -85,6 +85,6 @@ export function VideoHud(props: VideoHudProps) {
       onError={() => setError("Unable to play this clip. Check the file and browser codec support.")} />
     <canvas ref={canvas} style={{ width: "100%", display: "block", background: "#09181e" }} role="img" aria-label={`Video anatomy HUD. ${sourceLabels[props.source]}. ${props.visible ? props.mode : "Overlays hidden"}.`} />
     {error && <p role="alert" className="error">{error}</p>}
-    <p role="status" className="notice video-hud-notice">{notice}</p>
+    <p role="status" className="video-hud-notice">{notice}</p>
   </>;
 }
